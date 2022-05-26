@@ -9,12 +9,15 @@ public class Page {
     @Id
     @Column(name = "id", nullable = false)
     private Integer id;
+
     @Basic
     @Column(name = "path", nullable = false, length = -1)
     private String path;
+
     @Basic
     @Column(name = "code", nullable = false)
     private Integer code;
+
     @Basic
     @Column(name = "content", nullable = false, length = -1)
     private String content;

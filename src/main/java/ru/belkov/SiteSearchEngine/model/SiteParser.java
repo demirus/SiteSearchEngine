@@ -1,5 +1,7 @@
 package ru.belkov.SiteSearchEngine.model;
 
+import org.jsoup.safety.Whitelist;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
@@ -42,7 +44,9 @@ public class SiteParser extends RecursiveAction {
         try {
             if (!checkedLinksSet.contains(site.getUrl())) {
                 checkedLinksSet.add(site.getUrl());
-                Connection.Response response = Jsoup.connect(site.getUrl()).ignoreContentType(true)
+                Connection.Response response = Jsoup.connect(site.getUrl())
+                        .ignoreContentType(true)
+                        .ignoreHttpErrors(true)
                         .userAgent(config.getUserAgent())
                         .referrer(config.getReferrer())
                         .execute();
@@ -61,14 +65,19 @@ public class SiteParser extends RecursiveAction {
                             .filter(this::isSameDomain)
                             .filter(SiteParser::isNotHashMark)
                             .collect(Collectors.toSet());
-
                     if (links.size() > 0) {
                         ForkJoinTask.invokeAll(createSubtasks(links));
                     }
+                } else {
+                    Page page = new Page();
+                    page.setPath(site.getUrl());
+                    page.setContent("");
+                    page.setCode(response.statusCode());
+                    pageRepository.save(page);
                 }
             }
         } catch (Exception e) {
-            logger.error(e.toString());
+            logger.error(e + " URL: " + site.getUrl());
         }
     }
 

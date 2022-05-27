@@ -1,9 +1,13 @@
 package ru.belkov.SiteSearchEngine.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import ru.belkov.SiteSearchEngine.model.Site;
+import ru.belkov.SiteSearchEngine.model.entity.Field;
+import ru.belkov.SiteSearchEngine.repository.FieldRepository;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +19,15 @@ public class SiteParserConfig {
     private String userAgent;
 
     private String referrer;
+
+    private final FieldRepository fieldRepository;
+
+    private Iterable<Field> fields;
+
+    @Autowired
+    public SiteParserConfig(FieldRepository fieldRepository) {
+        this.fieldRepository = fieldRepository;
+    }
 
     public List<Site> getSites() {
         return sites;
@@ -40,10 +53,19 @@ public class SiteParserConfig {
         this.referrer = referrer;
     }
 
+    public Iterable<Field> getFields() {
+        return fields;
+    }
+
     @Override
     public String toString() {
         return "SiteParserConfig{" +
                 "sites=" + sites +
                 '}';
+    }
+
+    @PostConstruct
+    private void initFields() {
+        fields = fieldRepository.findAll();
     }
 }

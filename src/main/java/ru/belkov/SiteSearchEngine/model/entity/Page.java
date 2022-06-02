@@ -59,11 +59,11 @@ public class Page {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Page page = (Page) o;
-        return Objects.equals(id, page.id) && Objects.equals(path, page.path) && Objects.equals(code, page.code) && Objects.equals(content, page.content);
+        return Objects.equals(path, page.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, path, code, content);
+        return Objects.hash(path);
     }
 }

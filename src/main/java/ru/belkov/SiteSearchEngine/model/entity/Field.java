@@ -59,11 +59,11 @@ public class Field {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Field field = (Field) o;
-        return Objects.equals(id, field.id) && Objects.equals(name, field.name) && Objects.equals(selector, field.selector) && Objects.equals(weight, field.weight);
+        return Objects.equals(name, field.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, selector, weight);
+        return Objects.hash(name);
     }
 }

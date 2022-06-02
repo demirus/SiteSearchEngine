@@ -60,11 +60,11 @@ public class Index {
         if (this == o) return true;
         if (!(o instanceof Index)) return false;
         Index index = (Index) o;
-        return id.equals(index.id) && page.equals(index.page) && lemma.equals(index.lemma) && rank.equals(index.rank);
+        return page.equals(index.page) && lemma.equals(index.lemma);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, page, lemma, rank);
+        return Objects.hash(page, lemma);
     }
 }

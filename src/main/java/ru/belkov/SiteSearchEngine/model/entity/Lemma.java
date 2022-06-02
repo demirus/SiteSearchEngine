@@ -59,11 +59,11 @@ public class Lemma {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Lemma lemma1 = (Lemma) o;
-        return Objects.equals(id, lemma1.id) && Objects.equals(lemma, lemma1.lemma) && Objects.equals(frequency, lemma1.frequency);
+        return Objects.equals(lemma, lemma1.lemma);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, lemma, frequency);
+        return Objects.hash(lemma);
     }
 }

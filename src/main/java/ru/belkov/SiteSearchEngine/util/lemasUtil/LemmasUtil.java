@@ -12,6 +12,7 @@ public class LemmasUtil {
     public static Map<String, Integer> getLemmas(String inputText, List<LemmasLanguage> lemmasLanguages) {
         Map<String, Integer> lemmasMap = new HashMap<>();
         try {
+            inputText = inputText.replaceAll("/", " ");
             StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(inputText));
             int currentToken = tokenizer.nextToken();
             while (currentToken != StreamTokenizer.TT_EOF) {

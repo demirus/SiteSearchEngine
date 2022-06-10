@@ -6,4 +6,6 @@ public interface LemmaService {
     Lemma addIfNotExists(Lemma lemma);
 
     void incrementFrequency(Lemma lemma);
+
+    Lemma getLemmaByLemma(String lemma);
 }

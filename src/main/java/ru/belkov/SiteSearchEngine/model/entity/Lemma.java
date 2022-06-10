@@ -66,4 +66,13 @@ public class Lemma {
     public int hashCode() {
         return Objects.hash(lemma);
     }
+
+    @Override
+    public String toString() {
+        return "Lemma{" +
+                "id=" + id +
+                ", lemma='" + lemma + '\'' +
+                ", frequency=" + frequency +
+                '}';
+    }
 }

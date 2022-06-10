@@ -26,4 +26,9 @@ public class LemmaServiceImpl implements LemmaService {
         lemmaDB.setFrequency(lemmaDB.getFrequency() + 1);
         repository.save(lemmaDB);
     }
+
+    @Override
+    public synchronized Lemma getLemmaByLemma(String lemma) {
+        return repository.findLemmaByLemma(lemma);
+    }
 }

@@ -1,5 +1,7 @@
 package ru.belkov.SiteSearchEngine.model.entity;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -21,6 +23,11 @@ public class Page {
     @Basic
     @Column(name = "content", nullable = false, length = -1)
     private String content;
+
+    public String getTitle() {
+        Document document = Jsoup.parse(content);
+        return document.title();
+    }
 
     public Integer getId() {
         return id;
@@ -65,5 +72,15 @@ public class Page {
     @Override
     public int hashCode() {
         return Objects.hash(path);
+    }
+
+    @Override
+    public String toString() {
+        return "Page{" +
+                "id=" + id +
+                ", path='" + path + '\'' +
+                ", code=" + code +
+                ", content='" + content + '\'' +
+                '}';
     }
 }

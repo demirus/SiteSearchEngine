@@ -36,7 +36,7 @@ public class SearchServiceImpl implements SearchService {
             if (lemmas.isEmpty()) {
                 return new ArrayList<>();
             }
-            Lemma rarestLemma = lemmas.remove(0);
+            Lemma rarestLemma = lemmas.get(0);
             Collection<Index> indexes = rarestLemma.getIndexes();
             return getPagesWithLemmas(indexes, lemmas);
         } catch (IOException | EntityNotFoundException e) {

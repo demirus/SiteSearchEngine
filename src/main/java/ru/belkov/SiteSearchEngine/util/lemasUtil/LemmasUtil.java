@@ -37,4 +37,32 @@ public class LemmasUtil {
         }
         return lemmasMap;
     }
+
+    public static Map<String, String> getLemmasWithOriginalWords(String inputText, List<LemmasLanguage> lemmasLanguages) {
+        Map<String, String> lemmasMap = new HashMap<>();
+        try {
+            inputText = inputText.replaceAll("/", " ");
+            StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(inputText));
+            int currentToken = tokenizer.nextToken();
+            while (currentToken != StreamTokenizer.TT_EOF) {
+                if (tokenizer.ttype == StreamTokenizer.TT_WORD) {
+                    String originalWord = tokenizer.sval;
+                    String word = originalWord.toLowerCase(Locale.ROOT);
+                    for (LemmasLanguage lemmasLanguage : lemmasLanguages) {
+                        List<String> normalForms = lemmasLanguage.checkWord(word);
+                        for (String normalForm : normalForms) {
+                            if (!lemmasMap.containsKey(normalForm)) {
+                                lemmasMap.put(normalForm, originalWord);
+                            }
+                        }
+                    }
+                }
+                currentToken = tokenizer.nextToken();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lemmasMap;
+    }
 }

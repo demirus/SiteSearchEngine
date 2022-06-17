@@ -1,32 +1,38 @@
 package ru.belkov.SiteSearchEngine.service;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.belkov.SiteSearchEngine.model.entity.Index;
-import ru.belkov.SiteSearchEngine.model.entity.Lemma;
-import ru.belkov.SiteSearchEngine.model.entity.Page;
-import ru.belkov.SiteSearchEngine.model.entity.SearchPage;
+import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
+import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;
 
 import ru.belkov.SiteSearchEngine.exceptions.*;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class SearchServiceImpl implements SearchService {
-    private Logger logger = LoggerFactory.getLogger(SearchServiceImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(SearchServiceImpl.class);
 
     private final LemmaService lemmaService;
 
     private final IndexService indexService;
 
-    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService) {
+    private final SiteParserConfig parserConfig;
+
+    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig) {
         this.lemmaService = lemmaService;
         this.indexService = indexService;
+        this.parserConfig = parserConfig;
     }
 
     @Override
@@ -58,7 +64,7 @@ public class SearchServiceImpl implements SearchService {
         return lemmas;
     }
 
-    private List<SearchPage> getPagesWithLemmas(Collection<Index> indexes, List<Lemma> lemmas) throws EntityNotFoundException {
+    private List<SearchPage> getPagesWithLemmas(Collection<Index> indexes, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
         List<Index> indexList = new ArrayList<>(indexes);
         indexList.removeIf(index -> {
             Page page = index.getPage();
@@ -73,7 +79,22 @@ public class SearchServiceImpl implements SearchService {
         return createSearchPages(pages, lemmas);
     }
 
-   private double getMaxAbsoluteRelevance(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException {
+    private List<SearchPage> createSearchPages(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
+        List<SearchPage> searchPages = new ArrayList<>();
+        double maxAbsoluteRelevance = getMaxAbsoluteRelevance(pages, lemmas);
+        for (Page page : pages) {
+            SearchPage searchPage = new SearchPage();
+            searchPage.uri = page.getPath();
+            searchPage.title = page.getTitle();
+            searchPage.relevance = getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance;
+            searchPage.snippet = getSnippet(page, lemmas);
+            searchPages.add(searchPage);
+        }
+        searchPages.sort(Comparator.comparingDouble(sp -> -sp.relevance));
+        return searchPages;
+    }
+
+    private double getMaxAbsoluteRelevance(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException {
         double maxRelevance = 0.0;
         for (Page page : pages) {
             double relevance = getAbsoluteRelevance(page, lemmas);
@@ -96,18 +117,45 @@ public class SearchServiceImpl implements SearchService {
         return relevance;
     }
 
-    private List<SearchPage> createSearchPages(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException {
-        List<SearchPage> searchPages = new ArrayList<>();
-        double maxAbsoluteRelevance = getMaxAbsoluteRelevance(pages, lemmas);
-        for (Page page : pages) {
-            SearchPage searchPage = new SearchPage();
-            searchPage.uri = page.getPath();
-            searchPage.title = page.getTitle();
-            searchPage.relevance = getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance;
-            searchPages.add(searchPage);
+    private String getSnippet(Page page, List<Lemma> lemmas) throws IOException {
+        Map<String, String> fragments = new HashMap<>();
+        Document doc = Jsoup.parse(page.getContent());
+        for (Field field : parserConfig.getFields()) {
+            Elements elements = doc.select(field.getSelector());
+            Map<String, String> docLemmas = LemmasUtil.getLemmasWithOriginalWords(elements.text(), Arrays.asList(new LemmasLanguageRussian(), new LemmasLanguageEnglish()));
+            for (Lemma lemma : lemmas) {
+                if (docLemmas.containsKey(lemma.getLemma())) {
+                    String originalWord = docLemmas.get(lemma.getLemma());
+                    String fragment = getHtmlFragmentWithWord(originalWord, page);
+                    String clearedFromBTag = fragment.replaceAll("<b>", "").replaceAll("</b>", "");
+                    if (!fragments.containsKey(clearedFromBTag)) {
+                        fragments.put(clearedFromBTag, fragment);
+                    } else {
+                        String textBetweenTag = fragment.substring(fragment.indexOf("<b>") + 3, fragment.indexOf("</b>"));
+                        fragments.replace(clearedFromBTag, fragments.get(clearedFromBTag).replaceAll(textBetweenTag, "<b>" + textBetweenTag + "</b>"));
+                    }
+                }
+            }
+
         }
-        searchPages.sort(Comparator.comparingDouble(sp -> -sp.relevance));
-        return searchPages;
+        return String.join("\n", fragments.values());
+    }
+
+    private String getHtmlFragmentWithWord(String word, Page page) {
+        Document document = Jsoup.parse(page.getContent());
+        Elements elements = document.select(":contains(%)".replace("%", word));
+        String fragment = getSmallestTextFragment(elements);
+        if (fragment != null) {
+            return "<p>" + (fragment.replaceAll(word, "<b>" + word + "</b>")) + "</p>";
+        } else {
+            return "";
+        }
+    }
+
+    private String getSmallestTextFragment(Elements elements) {
+        Comparator<String> byLength = (e1, e2) -> e1.length() > e2.length() ? -1 : 1;
+        Optional<String> fragment = elements.stream().map(Element::text).sorted(byLength.reversed()).findFirst();
+        return fragment.orElse(null);
     }
 
 }

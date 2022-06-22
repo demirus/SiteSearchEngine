@@ -153,7 +153,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private String getSmallestTextFragment(Elements elements) {
-        Comparator<String> byLength = (e1, e2) -> e1.length() > e2.length() ? -1 : 1;
+        Comparator<String> byLength = (e1, e2) -> Integer.compare(e2.length(), e1.length());
         Optional<String> fragment = elements.stream().map(Element::text).sorted(byLength.reversed()).findFirst();
         return fragment.orElse(null);
     }

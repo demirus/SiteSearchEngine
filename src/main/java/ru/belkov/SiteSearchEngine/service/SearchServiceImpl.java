@@ -7,6 +7,7 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import ru.belkov.SiteSearchEngine.config.SearchServiceConfig;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
@@ -29,16 +30,20 @@ public class SearchServiceImpl implements SearchService {
 
     private final SiteParserConfig parserConfig;
 
-    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig) {
+    private final SearchServiceConfig searchConfig;
+
+    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig, SearchServiceConfig searchConfig) {
         this.lemmaService = lemmaService;
         this.indexService = indexService;
         this.parserConfig = parserConfig;
+        this.searchConfig = searchConfig;
     }
 
     @Override
     public List<SearchPage> search(String searchRequest) {
         try {
             List<Lemma> lemmas = getLemmasFromRequest(searchRequest);
+            deleteAllLemmasWithTooHighFrequency(lemmas);
             if (lemmas.isEmpty()) {
                 return new ArrayList<>();
             }
@@ -49,6 +54,11 @@ public class SearchServiceImpl implements SearchService {
             logger.error(e.toString());
         }
         return null;
+    }
+
+    private void deleteAllLemmasWithTooHighFrequency(List<Lemma> lemmas) {
+        long configMaxFrequency = searchConfig.getMaxLemmaFrequency();
+        lemmas.removeIf(l -> l.getFrequency() >= configMaxFrequency);
     }
 
     private List<Lemma> getLemmasFromRequest(String request) throws IOException {

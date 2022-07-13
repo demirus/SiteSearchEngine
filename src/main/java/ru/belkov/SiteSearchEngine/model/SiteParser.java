@@ -4,16 +4,15 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
-import ru.belkov.SiteSearchEngine.model.entity.Field;
-import ru.belkov.SiteSearchEngine.model.entity.Index;
-import ru.belkov.SiteSearchEngine.model.entity.Lemma;
-import ru.belkov.SiteSearchEngine.model.entity.Page;
+import ru.belkov.SiteSearchEngine.enums.SiteStatus;
+import ru.belkov.SiteSearchEngine.model.entity.*;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import ru.belkov.SiteSearchEngine.service.IndexService;
 import ru.belkov.SiteSearchEngine.service.LemmaService;
 import ru.belkov.SiteSearchEngine.service.PageService;
+import ru.belkov.SiteSearchEngine.service.SiteService;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;
@@ -21,15 +20,19 @@ import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
 public class SiteParser extends RecursiveAction {
 
     private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
+
+    private static AtomicInteger siteParsersCount = new AtomicInteger(0);
 
     private final PageService pageService;
 
@@ -39,31 +42,44 @@ public class SiteParser extends RecursiveAction {
 
     private final IndexService indexService;
 
+    private final SiteService siteService;
+
     private final Site site;
 
-    public SiteParser(Site site, SiteParserConfig config, PageService pageService, LemmaService lemmaService, IndexService indexService) {
+    private String url;
+
+    public SiteParser(Site site, String url, SiteParserConfig config, PageService pageService, LemmaService lemmaService, IndexService indexService, SiteService siteService) {
         this.site = site;
         this.pageService = pageService;
         this.config = config;
         this.lemmaService = lemmaService;
         this.indexService = indexService;
+        this.url = url;
+        this.siteService = siteService;
     }
+
+
 
     @Override
     protected void compute() {
         try {
+            siteParsersCount.incrementAndGet();
             Page page = new Page();
-            page.setPath(site.getUrl());
+            page.setPath(url);
             page.setContent("");
             page.setCode(0);
+            page.setSite(site);
             if (pageService.addIfNotExists(page)) {
-                Connection.Response response = createResponse(site.getUrl());
+                site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+                site.setStatus(SiteStatus.INDEXING);
+                siteService.updateSiteByUrl(site);
+                Connection.Response response = createResponse(url);
                 String contentType = response.contentType();
                 if (contentType != null && contentType.contains("text/") && (response.statusCode() != 404 || response.statusCode() != 500)) {
                     Document doc = response.parse();
                     page.setContent(doc.html());
                     page.setCode(response.statusCode());
-                    page = pageService.updateByPath(page);
+                    page = pageService.updateByPathAndSite(page);
                     createLemmasAndIndices(doc, page);
                     Set<String> links = getLinks(doc);
                     if (links.size() > 0) {
@@ -71,10 +87,18 @@ public class SiteParser extends RecursiveAction {
                     }
                 } else {
                     page.setCode(response.statusCode());
-                    pageService.updateByPath(page);
+                    pageService.updateByPathAndSite(page);
                 }
             }
+            siteParsersCount.decrementAndGet();
+            if (siteParsersCount.decrementAndGet() == 0) {
+                site.setStatus(SiteStatus.INDEXED);
+                siteService.updateSiteByUrl(site);
+            }
         } catch (IOException e) {
+            site.setLastError(e.getMessage());
+            site.setStatus(SiteStatus.FAILED);
+            siteService.updateSiteByUrl(site);
             logger.error(e + " URL: " + site.getUrl());
         }
     }
@@ -89,7 +113,7 @@ public class SiteParser extends RecursiveAction {
     }
 
     private Connection.Response createResponse(String url) throws IOException {
-        return Jsoup.connect(site.getUrl())
+        return Jsoup.connect(url)
                 .ignoreContentType(true)
                 .ignoreHttpErrors(true)
                 .userAgent(config.getUserAgent())
@@ -106,6 +130,7 @@ public class SiteParser extends RecursiveAction {
                 Lemma lemma = new Lemma();
                 lemma.setLemma(entry.getKey());
                 lemma.setFrequency(0);
+                lemma.setSite(site);
                 lemma = lemmaService.addIfNotExists(lemma);
                 lemmaSet.add(lemma);
                 Index index = indexService.findIndexByLemmaAndPage(lemma, page);
@@ -132,9 +157,7 @@ public class SiteParser extends RecursiveAction {
     private List<SiteParser> createSubtasks(Set<String> links) {
         List<SiteParser> dividedTasks = new ArrayList<>();
         for (String link : links) {
-            Site site = new Site();
-            site.setUrl(link);
-            dividedTasks.add(new SiteParser(site, config, pageService, lemmaService, indexService));
+            dividedTasks.add(new SiteParser(site, link, config, pageService, lemmaService, indexService, siteService));
         }
         return dividedTasks;
     }

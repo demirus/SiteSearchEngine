@@ -6,13 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import ru.belkov.SiteSearchEngine.model.Site;
+import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.model.SiteParser;
-
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
-
 @Service
 public class SiteParserService {
     private final SiteParserConfig siteParserConfig;
@@ -23,14 +20,17 @@ public class SiteParserService {
 
     private final PageService pageService;
 
+    private final SiteService siteService;
+
     private final Logger logger = LoggerFactory.getLogger(SiteParserService.class);
 
     @Autowired
-    public SiteParserService(SiteParserConfig siteParserConfig, IndexService indexService, LemmaService lemmaService, PageService pageService) {
+    public SiteParserService(SiteParserConfig siteParserConfig, IndexService indexService, LemmaService lemmaService, PageService pageService, SiteService siteService) {
         this.siteParserConfig = siteParserConfig;
         this.indexService = indexService;
         this.lemmaService = lemmaService;
         this.pageService = pageService;
+        this.siteService = siteService;
     }
 
     @EventListener(ContextRefreshedEvent.class)
@@ -39,14 +39,11 @@ public class SiteParserService {
     }
 
     public void startParsing() {
-        ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
         List<Site> sites = siteParserConfig.getSites();
         logger.info("sites parse starts...");
         for (Site site : sites) {
-            logger.info("the parsing of site: " + site.getUrl() + " has started...");
-            forkJoinPool.invoke(new SiteParser(site, siteParserConfig, pageService, lemmaService, indexService));
-            logger.info("the parsing of site: " + site.getUrl() + " has over...");
+            SiteParser siteParser = new SiteParser(site, site.getUrl(), siteParserConfig, pageService, lemmaService, indexService, siteService);
+            siteParser.fork();
         }
-        logger.info("sites parse complete...");
     }
 }

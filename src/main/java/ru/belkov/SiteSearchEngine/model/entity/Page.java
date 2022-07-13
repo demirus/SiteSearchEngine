@@ -24,6 +24,10 @@ public class Page {
     @Column(name = "content", nullable = false, length = -1)
     private String content;
 
+    @ManyToOne
+    @JoinColumn(name = "site_id", nullable = false)
+    private Site site;
+
     public String getTitle() {
         Document document = Jsoup.parse(content);
         return document.title();
@@ -61,17 +65,25 @@ public class Page {
         this.content = content;
     }
 
+    public Site getSite() {
+        return site;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Page)) return false;
         Page page = (Page) o;
-        return Objects.equals(path, page.path);
+        return path.equals(page.path) && site.equals(page.site);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(path);
+        return Objects.hash(path, site);
     }
 
     @Override
@@ -81,6 +93,7 @@ public class Page {
                 ", path='" + path + '\'' +
                 ", code=" + code +
                 ", content='" + content + '\'' +
+                ", site=" + site +
                 '}';
     }
 }

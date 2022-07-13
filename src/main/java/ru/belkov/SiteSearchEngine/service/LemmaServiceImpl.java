@@ -14,15 +14,15 @@ public class LemmaServiceImpl implements LemmaService {
 
     @Override
     public synchronized Lemma addIfNotExists(Lemma lemma) {
-        if (!repository.existsLemmaByLemma(lemma.getLemma())) {
+        if (!repository.existsLemmaByLemmaAndSite(lemma.getLemma(), lemma.getSite())) {
             return repository.saveAndFlush(lemma);
         }
-        return repository.findLemmaByLemma(lemma.getLemma());
+        return repository.findLemmaByLemmaAndSite(lemma.getLemma(), lemma.getSite());
     }
 
     @Override
     public synchronized void incrementFrequency(Lemma lemma) {
-        Lemma lemmaDB = repository.findLemmaByLemma(lemma.getLemma());
+        Lemma lemmaDB = repository.findLemmaByLemmaAndSite(lemma.getLemma(), lemma.getSite());
         lemmaDB.setFrequency(lemmaDB.getFrequency() + 1);
         repository.save(lemmaDB);
     }

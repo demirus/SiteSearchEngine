@@ -3,18 +3,24 @@ package ru.belkov.SiteSearchEngine.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import ru.belkov.SiteSearchEngine.model.Site;
+import ru.belkov.SiteSearchEngine.enums.SiteStatus;
+import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.model.entity.Field;
 import ru.belkov.SiteSearchEngine.repository.FieldRepository;
+import ru.belkov.SiteSearchEngine.service.SiteService;
 
 import javax.annotation.PostConstruct;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @ConfigurationProperties("parser")
 public class SiteParserConfig {
     private List<Site> sites = new ArrayList<>();
+
+    private Map<String, String> initSites;
 
     private String userAgent;
 
@@ -22,19 +28,44 @@ public class SiteParserConfig {
 
     private final FieldRepository fieldRepository;
 
+    private final SiteService siteService;
+
     private Iterable<Field> fields;
 
     @Autowired
-    public SiteParserConfig(FieldRepository fieldRepository) {
+    public SiteParserConfig(FieldRepository fieldRepository, SiteService siteService) {
         this.fieldRepository = fieldRepository;
+        this.siteService = siteService;
     }
 
-    public List<Site> getSites() {
-        return sites;
+    @PostConstruct
+    private void initFields() {
+        fields = fieldRepository.findAll();
     }
 
-    public void setSites(List<Site> sites) {
-        this.sites = sites;
+    @PostConstruct
+    private void initSites() {
+        for (Map.Entry<String, String> entry : initSites.entrySet()) {
+            Site site = new Site();
+            site.setUrl(entry.getValue());
+            site.setName(entry.getKey());
+            site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+            site.setStatus(SiteStatus.INDEXING);
+            site = siteService.addIfNotExists(site);
+            sites.add(site);
+        }
+    }
+
+    public void setInitSites(Map<String, String> initSites) {
+        this.initSites = initSites;
+    }
+
+    public Map<String, String> getInitSites() {
+        return initSites;
+    }
+
+    public void setSites(Map<String, String> initSites) {
+        this.initSites = initSites;
     }
 
     public String getUserAgent() {
@@ -57,15 +88,11 @@ public class SiteParserConfig {
         return fields;
     }
 
-    @Override
-    public String toString() {
-        return "SiteParserConfig{" +
-                "sites=" + sites +
-                '}';
+    public List<Site> getSites() {
+        return sites;
     }
 
-    @PostConstruct
-    private void initFields() {
-        fields = fieldRepository.findAll();
+    public void setSites(List<Site> sites) {
+        this.sites = sites;
     }
 }

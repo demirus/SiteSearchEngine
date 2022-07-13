@@ -15,7 +15,7 @@ public class PageServiceImpl implements PageService {
 
     @Override
     public synchronized boolean addIfNotExists(Page page) {
-        if (!pageRepository.existsByPath(page.getPath())) {
+        if (!pageRepository.existsByPathAndSite(page.getPath(), page.getSite())) {
             pageRepository.saveAndFlush(page);
             return true;
         }
@@ -23,8 +23,8 @@ public class PageServiceImpl implements PageService {
     }
 
     @Override
-    public Page updateByPath(Page page) {
-        Page dbPage = pageRepository.getByPath(page.getPath());
+    public Page updateByPathAndSite(Page page) {
+        Page dbPage = pageRepository.getByPathAndSite(page.getPath(), page.getSite());
         dbPage.setCode(page.getCode());
         dbPage.setContent(page.getContent());
         return pageRepository.saveAndFlush(dbPage);

@@ -10,17 +10,17 @@ public class Lemma {
     @Id
     @Column(name = "id")
     private Integer id;
-
     @Basic
     @Column(name = "lemma")
     private String lemma;
-
     @Basic
     @Column(name = "frequency")
     private Integer frequency;
-
     @OneToMany(mappedBy = "lemma", fetch = FetchType.LAZY)
     private Collection<Index> indexes;
+    @ManyToOne
+    @JoinColumn(name = "site_id")
+    private Site site;
 
     public Integer getId() {
         return id;
@@ -54,17 +54,25 @@ public class Lemma {
         this.indexes = indicesById;
     }
 
+    public Site getSite() {
+        return site;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Lemma)) return false;
         Lemma lemma1 = (Lemma) o;
-        return Objects.equals(lemma, lemma1.lemma);
+        return Objects.equals(lemma, lemma1.lemma) && Objects.equals(site, lemma1.site);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(lemma);
+        return Objects.hash(lemma, site);
     }
 
     @Override
@@ -73,6 +81,8 @@ public class Lemma {
                 "id=" + id +
                 ", lemma='" + lemma + '\'' +
                 ", frequency=" + frequency +
+                ", indexes=" + indexes +
+                ", site=" + site +
                 '}';
     }
 }

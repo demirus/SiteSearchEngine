@@ -24,15 +24,12 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
 public class SiteParser extends RecursiveAction {
 
     private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
-
-    private static AtomicInteger siteParsersCount = new AtomicInteger(0);
 
     private final PageService pageService;
 
@@ -57,13 +54,9 @@ public class SiteParser extends RecursiveAction {
         this.url = url;
         this.siteService = siteService;
     }
-
-
-
     @Override
     protected void compute() {
         try {
-            siteParsersCount.incrementAndGet();
             Page page = new Page();
             page.setPath(url);
             page.setContent("");
@@ -89,11 +82,6 @@ public class SiteParser extends RecursiveAction {
                     page.setCode(response.statusCode());
                     pageService.updateByPathAndSite(page);
                 }
-            }
-            siteParsersCount.decrementAndGet();
-            if (siteParsersCount.decrementAndGet() == 0) {
-                site.setStatus(SiteStatus.INDEXED);
-                siteService.updateSiteByUrl(site);
             }
         } catch (IOException e) {
             site.setLastError(e.getMessage());

@@ -1,9 +1,10 @@
 package ru.belkov.SiteSearchEngine.service;
 
 import org.springframework.stereotype.Service;
-import ru.belkov.SiteSearchEngine.model.entity.Page;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.repository.SiteRepository;
+
+import java.util.List;
 
 @Service
 public class SiteServiceImpl implements SiteService{
@@ -30,5 +31,10 @@ public class SiteServiceImpl implements SiteService{
         dbSite.setName(site.getName());
         dbSite.setLastError(site.getLastError());
         return siteRepository.saveAndFlush(dbSite);
+    }
+
+    @Override
+    public List<Site> getAll() {
+        return siteRepository.findAll();
     }
 }

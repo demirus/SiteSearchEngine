@@ -5,11 +5,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.belkov.SiteSearchEngine.enums.SiteStatus;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.model.SiteParser;
+
+import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 @Service
 public class SiteParserService {
     private final SiteParserConfig siteParserConfig;
@@ -21,6 +28,8 @@ public class SiteParserService {
     private final PageService pageService;
 
     private final SiteService siteService;
+
+    private static Map<Site, Timestamp> statusTimeMap = new HashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger(SiteParserService.class);
 
@@ -40,10 +49,26 @@ public class SiteParserService {
 
     public void startParsing() {
         List<Site> sites = siteParserConfig.getSites();
-        logger.info("sites parse starts...");
         for (Site site : sites) {
             SiteParser siteParser = new SiteParser(site, site.getUrl(), siteParserConfig, pageService, lemmaService, indexService, siteService);
             siteParser.fork();
+        }
+    }
+
+    @Scheduled(fixedRate = 300000)
+    public void reportCurrentTime() {
+        List<Site> sites = siteService.getAll();
+        for (Site site : sites) {
+            if (!statusTimeMap.containsKey(site)) {
+                statusTimeMap.put(site, site.getStatusTime());
+            } else {
+                if (statusTimeMap.get(site).equals(site.getStatusTime())) {
+                    site.setStatus(SiteStatus.INDEXED);
+                    siteService.updateSiteByUrl(site);
+                } else {
+                    statusTimeMap.put(site, site.getStatusTime());
+                }
+            }
         }
     }
 }

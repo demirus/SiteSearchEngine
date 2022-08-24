@@ -16,6 +16,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
 
 @Service
 public class SiteParserService {
@@ -33,6 +34,10 @@ public class SiteParserService {
 
     private final Logger logger = LoggerFactory.getLogger(SiteParserService.class);
 
+    private boolean isIndexingRunning = false;
+
+    private ForkJoinPool forkJoinPool;
+
     @Autowired
     public SiteParserService(SiteParserConfig siteParserConfig, IndexService indexService, LemmaService lemmaService, PageService pageService, SiteService siteService) {
         this.siteParserConfig = siteParserConfig;
@@ -47,28 +52,64 @@ public class SiteParserService {
         event.getApplicationContext().getBean(SiteParserService.class).startParsing();
     }
 
-    public void startParsing() {
-        List<Site> sites = siteParserConfig.getSites();
-        for (Site site : sites) {
-            SiteParser siteParser = new SiteParser(site, site.getUrl(), siteParserConfig, pageService, lemmaService, indexService, siteService);
-            siteParser.fork();
+    public synchronized void startParsing() {
+        if (!isIndexingRunning) {
+            isIndexingRunning = true;
+            List<Site> configSites = siteParserConfig.getSites();
+            siteService.deleteAll();
+            SiteParser.startIndexing();
+            for (Site site : configSites) {
+                site.setId(null);
+                site.setStatus(SiteStatus.INDEXING);
+                siteService.addIfNotExists(site);
+                SiteParser siteParser = new SiteParser(site, site.getUrl(), siteParserConfig, pageService, lemmaService, indexService, siteService);
+                ForkJoinPool.commonPool().execute(siteParser);
+            }
         }
     }
 
     @Scheduled(fixedRate = 300000)
     public void reportCurrentTime() {
-        List<Site> sites = siteService.getAll();
-        for (Site site : sites) {
-            if (!statusTimeMap.containsKey(site)) {
-                statusTimeMap.put(site, site.getStatusTime());
-            } else {
-                if (statusTimeMap.get(site).equals(site.getStatusTime())) {
-                    site.setStatus(SiteStatus.INDEXED);
-                    siteService.updateSiteByUrl(site);
-                } else {
+        if (isIndexingRunning) {
+            boolean isIndexingComplete = true;
+            List<Site> sites = siteService.getAll();
+            for (Site site : sites) {
+                if (!statusTimeMap.containsKey(site)) {
                     statusTimeMap.put(site, site.getStatusTime());
+                } else {
+                    if (statusTimeMap.get(site).equals(site.getStatusTime())) {
+                        site.setStatus(SiteStatus.INDEXED);
+                        siteService.updateSiteByUrl(site);
+                    } else {
+                        statusTimeMap.put(site, site.getStatusTime());
+                    }
+                }
+                if (!(site.getStatus() == SiteStatus.INDEXED)) {
+                    isIndexingComplete = false;
                 }
             }
+            if (isIndexingComplete) {
+                isIndexingRunning = false;
+            }
+        }
+    }
+
+    public boolean isIndexingRunning() {
+        return isIndexingRunning;
+    }
+
+    public boolean stopIndexing() {
+        if (isIndexingRunning) {
+            SiteParser.stopIndexing();
+            List<Site> sites = siteParserConfig.getSites();
+            for (Site site : sites) {
+                site.setStatus(SiteStatus.INDEXED);
+                siteService.updateSiteByUrl(site);
+            }
+            isIndexingRunning = false;
+            return true;
+        } else {
+            return false;
         }
     }
 }

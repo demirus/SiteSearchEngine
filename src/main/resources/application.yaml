@@ -1,16 +1,14 @@
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/search_engine
     username: root
-    password: 895376582
+    password: *******
 
 parser:
-  userAgent: BelkovSearchBot
-  referrer: http://www.google.com
-  sites:
-    - url: http://www.playback.ru/
-      name: Интернет-магазин PlayBack.ru
-    - url: https://www.lutherancathedral.ru/
-      name: Собор
-
+  userAgent: Chrome/4.0.249.0 Safari/532.5
+  referrer: https://www.google.com
+  initSites:
+    name1 : http://mukhacheva.ucoz.ru/
+    name2 : http://sibuch.ru/
+search:
+  maxLemmaFrequency: 100

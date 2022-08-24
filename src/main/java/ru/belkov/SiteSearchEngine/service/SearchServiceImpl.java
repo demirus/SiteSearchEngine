@@ -40,6 +40,12 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
+    public List<SearchPage> search(String searchRequest, Site site) {
+//        List<Lemma> lemmas =
+        return null;
+    }
+
+    @Override
     public List<SearchPage> search(String searchRequest) {
         try {
             List<Lemma> lemmas = getLemmasFromRequest(searchRequest);

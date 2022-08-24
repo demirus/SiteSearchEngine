@@ -51,7 +51,6 @@ public class SiteParserConfig {
             site.setName(entry.getKey());
             site.setStatusTime(new Timestamp(System.currentTimeMillis()));
             site.setStatus(SiteStatus.INDEXING);
-            site = siteService.addIfNotExists(site);
             sites.add(site);
         }
     }

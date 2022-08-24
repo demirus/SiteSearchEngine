@@ -37,4 +37,14 @@ public class SiteServiceImpl implements SiteService{
     public List<Site> getAll() {
         return siteRepository.findAll();
     }
+
+    @Override
+    public void deleteSiteByUrl(Site site) {
+        siteRepository.deleteByUrl(site.getUrl());
+    }
+
+    @Override
+    public void deleteAll() {
+        siteRepository.deleteAll();
+    }
 }

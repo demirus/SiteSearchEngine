@@ -7,4 +7,6 @@ import ru.belkov.SiteSearchEngine.model.entity.Site;
 public interface SiteRepository extends JpaRepository<Site, Integer> {
     boolean existsByUrl(String url);
     Site getByUrl(String url);
+    void deleteByUrl(String url);
+    void deleteAll();
 }

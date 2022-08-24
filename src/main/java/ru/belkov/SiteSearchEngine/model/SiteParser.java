@@ -31,6 +31,8 @@ public class SiteParser extends RecursiveAction {
 
     private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
 
+    private static boolean stop;
+
     private final PageService pageService;
 
     private final SiteParserConfig config;
@@ -54,40 +56,43 @@ public class SiteParser extends RecursiveAction {
         this.url = url;
         this.siteService = siteService;
     }
+
     @Override
     protected void compute() {
-        try {
-            Page page = new Page();
-            page.setPath(url);
-            page.setContent("");
-            page.setCode(0);
-            page.setSite(site);
-            if (pageService.addIfNotExists(page)) {
-                site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-                site.setStatus(SiteStatus.INDEXING);
-                siteService.updateSiteByUrl(site);
-                Connection.Response response = createResponse(url);
-                String contentType = response.contentType();
-                if (contentType != null && contentType.contains("text/") && (response.statusCode() != 404 || response.statusCode() != 500)) {
-                    Document doc = response.parse();
-                    page.setContent(doc.html());
-                    page.setCode(response.statusCode());
-                    page = pageService.updateByPathAndSite(page);
-                    createLemmasAndIndices(doc, page);
-                    Set<String> links = getLinks(doc);
-                    if (links.size() > 0) {
-                        ForkJoinTask.invokeAll(createSubtasks(links));
+        if (!stop) {
+            try {
+                Page page = new Page();
+                page.setPath(url);
+                page.setContent("");
+                page.setCode(0);
+                page.setSite(site);
+                if (pageService.addIfNotExists(page)) {
+                    site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+                    site.setStatus(SiteStatus.INDEXING);
+                    siteService.updateSiteByUrl(site);
+                    Connection.Response response = createResponse(url);
+                    String contentType = response.contentType();
+                    if (contentType != null && contentType.contains("text/") && (response.statusCode() != 404 || response.statusCode() != 500)) {
+                        Document doc = response.parse();
+                        page.setContent(doc.html());
+                        page.setCode(response.statusCode());
+                        page = pageService.updateByPathAndSite(page);
+                        createLemmasAndIndices(doc, page);
+                        Set<String> links = getLinks(doc);
+                        if (links.size() > 0) {
+                            ForkJoinTask.invokeAll(createSubtasks(links));
+                        }
+                    } else {
+                        page.setCode(response.statusCode());
+                        pageService.updateByPathAndSite(page);
                     }
-                } else {
-                    page.setCode(response.statusCode());
-                    pageService.updateByPathAndSite(page);
                 }
+            } catch (IOException e) {
+                site.setLastError(e.getMessage());
+                site.setStatus(SiteStatus.FAILED);
+                siteService.updateSiteByUrl(site);
+                logger.error(e + " URL: " + site.getUrl());
             }
-        } catch (IOException e) {
-            site.setLastError(e.getMessage());
-            site.setStatus(SiteStatus.FAILED);
-            siteService.updateSiteByUrl(site);
-            logger.error(e + " URL: " + site.getUrl());
         }
     }
 
@@ -171,5 +176,13 @@ public class SiteParser extends RecursiveAction {
             }
         }
         return false;
+    }
+
+    public static void stopIndexing() {
+        stop = true;
+    }
+
+    public static void startIndexing() {
+        stop = false;
     }
 }

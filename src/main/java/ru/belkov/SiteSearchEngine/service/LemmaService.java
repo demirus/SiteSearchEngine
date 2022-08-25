@@ -8,4 +8,6 @@ public interface LemmaService {
     void incrementFrequency(Lemma lemma);
 
     Lemma getLemmaByLemma(String lemma);
+
+    long count();
 }

@@ -4,6 +4,7 @@ import ru.belkov.SiteSearchEngine.enums.SiteStatus;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -28,7 +29,10 @@ public class Site {
     @Basic
     @Column(name = "name")
     private String name;
-
+    @OneToMany(mappedBy = "site")
+    private List<Page> pages;
+    @OneToMany(mappedBy = "site")
+    private List<Lemma> lemmas;
     public Integer getId() {
         return id;
     }
@@ -75,6 +79,20 @@ public class Site {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<Page> getPages() {
+        return pages;
+    }
+    public void setPages(List<Page> pages) {
+        this.pages = pages;
+    }
+    public List<Lemma> getLemmas() {
+        return lemmas;
+    }
+
+    public void setLemmas(List<Lemma> lemmas) {
+        this.lemmas = lemmas;
     }
 
     @Override

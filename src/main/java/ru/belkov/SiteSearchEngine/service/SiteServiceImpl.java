@@ -47,4 +47,9 @@ public class SiteServiceImpl implements SiteService{
     public void deleteAll() {
         siteRepository.deleteAll();
     }
+
+    @Override
+    public long count() {
+        return siteRepository.count();
+    }
 }

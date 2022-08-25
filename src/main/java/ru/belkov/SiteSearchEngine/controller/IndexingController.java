@@ -18,7 +18,7 @@ public class IndexingController {
     @GetMapping("/startIndexing")
     public Map<String, String> startIndexing() {
         Map<String, String> answer = new HashMap<>();
-        if (siteParserService.isIndexingRunning()) {
+        if (siteParserService.isIndexing()) {
             answer.put("result", "false");
             answer.put("error", "Индексация уже запущена");
         } else {

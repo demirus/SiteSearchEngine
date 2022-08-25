@@ -6,4 +6,6 @@ public interface PageService {
     boolean addIfNotExists(Page page);
 
     Page updateByPathAndSite(Page page);
+
+    long count();
 }

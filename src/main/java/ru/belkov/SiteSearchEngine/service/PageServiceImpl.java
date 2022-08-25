@@ -29,4 +29,9 @@ public class PageServiceImpl implements PageService {
         dbPage.setContent(page.getContent());
         return pageRepository.saveAndFlush(dbPage);
     }
+
+    @Override
+    public long count() {
+        return pageRepository.count();
+    }
 }

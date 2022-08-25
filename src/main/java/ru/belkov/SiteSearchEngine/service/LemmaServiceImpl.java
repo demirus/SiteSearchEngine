@@ -31,4 +31,9 @@ public class LemmaServiceImpl implements LemmaService {
     public synchronized Lemma getLemmaByLemma(String lemma) {
         return repository.findLemmaByLemma(lemma);
     }
+
+    @Override
+    public long count() {
+        return repository.count();
+    }
 }

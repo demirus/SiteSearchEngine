@@ -34,7 +34,7 @@ public class SiteParserService {
 
     private final Logger logger = LoggerFactory.getLogger(SiteParserService.class);
 
-    private boolean isIndexingRunning = false;
+    private boolean isIndexing = false;
 
     private ForkJoinPool forkJoinPool;
 
@@ -53,8 +53,8 @@ public class SiteParserService {
     }
 
     public synchronized void startParsing() {
-        if (!isIndexingRunning) {
-            isIndexingRunning = true;
+        if (!isIndexing) {
+            isIndexing = true;
             List<Site> configSites = siteParserConfig.getSites();
             siteService.deleteAll();
             SiteParser.startIndexing();
@@ -70,7 +70,7 @@ public class SiteParserService {
 
     @Scheduled(fixedRate = 300000)
     public void reportCurrentTime() {
-        if (isIndexingRunning) {
+        if (isIndexing) {
             boolean isIndexingComplete = true;
             List<Site> sites = siteService.getAll();
             for (Site site : sites) {
@@ -89,24 +89,24 @@ public class SiteParserService {
                 }
             }
             if (isIndexingComplete) {
-                isIndexingRunning = false;
+                isIndexing = false;
             }
         }
     }
 
-    public boolean isIndexingRunning() {
-        return isIndexingRunning;
+    public boolean isIndexing() {
+        return isIndexing;
     }
 
     public boolean stopIndexing() {
-        if (isIndexingRunning) {
+        if (isIndexing) {
             SiteParser.stopIndexing();
             List<Site> sites = siteParserConfig.getSites();
             for (Site site : sites) {
                 site.setStatus(SiteStatus.INDEXED);
                 siteService.updateSiteByUrl(site);
             }
-            isIndexingRunning = false;
+            isIndexing = false;
             return true;
         } else {
             return false;

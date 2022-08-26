@@ -1,11 +1,10 @@
 package ru.belkov.SiteSearchEngine.model.entity;
 
-public class SiteInformation {
+public abstract class SiteInformation {
     private String url;
     private String name;
     private String status;
     private String statusTime;
-    private String error;
     private String pages;
     private String lemmas;
 
@@ -39,14 +38,6 @@ public class SiteInformation {
 
     public void setStatusTime(String statusTime) {
         this.statusTime = statusTime;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
     }
 
     public String getPages() {

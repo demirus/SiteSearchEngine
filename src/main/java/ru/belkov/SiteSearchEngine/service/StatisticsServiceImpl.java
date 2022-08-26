@@ -1,10 +1,7 @@
 package ru.belkov.SiteSearchEngine.service;
 
 import org.springframework.stereotype.Service;
-import ru.belkov.SiteSearchEngine.model.entity.Site;
-import ru.belkov.SiteSearchEngine.model.entity.SiteInformation;
-import ru.belkov.SiteSearchEngine.model.entity.Statistics;
-import ru.belkov.SiteSearchEngine.model.entity.TotalStatistics;
+import ru.belkov.SiteSearchEngine.model.entity.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,19 +40,32 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     private List<SiteInformation> getSitesInformation() {
-        List<SiteInformation> siteInformationList = new ArrayList<>();
+        List<SiteInformation> siteInformationWithoutErrorImplList = new ArrayList<>();
         List<Site> sites = siteService.getAll();
         for (Site site : sites) {
-            SiteInformation siteInformation = new SiteInformation();
-            siteInformation.setStatus(site.getStatus().toString());
-            siteInformation.setStatusTime(site.getStatusTime().toString());
-            siteInformation.setError(site.getLastError());
-            siteInformation.setUrl(site.getUrl());
-            siteInformation.setName(site.getName());
-            siteInformation.setLemmas(String.valueOf(site.getLemmas().size()));
-            siteInformation.setPages(String.valueOf(site.getPages().size()));
-            siteInformationList.add(siteInformation);
+            String error = site.getLastError();
+            if (error == null) {
+                SiteInformationWithoutErrorImpl siteInformationWithoutErrorImpl = new SiteInformationWithoutErrorImpl();
+                siteInformationWithoutErrorImpl.setStatus(site.getStatus().toString());
+                siteInformationWithoutErrorImpl.setStatusTime(site.getStatusTime().toString());
+                siteInformationWithoutErrorImpl.setUrl(site.getUrl());
+                siteInformationWithoutErrorImpl.setName(site.getName());
+                siteInformationWithoutErrorImpl.setLemmas(String.valueOf(site.getLemmas().size()));
+                siteInformationWithoutErrorImpl.setPages(String.valueOf(site.getPages().size()));
+                siteInformationWithoutErrorImplList.add(siteInformationWithoutErrorImpl);
+            } else {
+                SiteInformationWithErrorImpl siteInformationWithErrorImpl = new SiteInformationWithErrorImpl();
+                siteInformationWithErrorImpl.setStatus(site.getStatus().toString());
+                siteInformationWithErrorImpl.setStatusTime(site.getStatusTime().toString());
+                siteInformationWithErrorImpl.setError(error);
+                siteInformationWithErrorImpl.setUrl(site.getUrl());
+                siteInformationWithErrorImpl.setName(site.getName());
+                siteInformationWithErrorImpl.setLemmas(String.valueOf(site.getLemmas().size()));
+                siteInformationWithErrorImpl.setPages(String.valueOf(site.getPages().size()));
+                siteInformationWithoutErrorImplList.add(siteInformationWithErrorImpl);
+            }
+
         }
-        return siteInformationList;
+        return siteInformationWithoutErrorImplList;
     }
 }

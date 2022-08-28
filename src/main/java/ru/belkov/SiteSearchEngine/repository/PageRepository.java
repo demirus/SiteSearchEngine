@@ -8,4 +8,6 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     boolean existsByPathAndSite(String path, Site site);
 
     Page getByPathAndSite(String path, Site site);
+
+    Page getByPath(String url);
 }

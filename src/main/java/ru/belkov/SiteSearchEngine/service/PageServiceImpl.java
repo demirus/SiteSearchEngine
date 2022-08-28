@@ -34,4 +34,9 @@ public class PageServiceImpl implements PageService {
     public long count() {
         return pageRepository.count();
     }
+
+    @Override
+    public Page getByUrl(String url) {
+        return pageRepository.getByPath(url);
+    }
 }

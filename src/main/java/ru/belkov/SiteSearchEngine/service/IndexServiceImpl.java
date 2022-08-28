@@ -6,6 +6,8 @@ import ru.belkov.SiteSearchEngine.model.entity.Lemma;
 import ru.belkov.SiteSearchEngine.model.entity.Page;
 import ru.belkov.SiteSearchEngine.repository.IndexRepository;
 
+import java.util.List;
+
 @Service
 public class IndexServiceImpl implements IndexService {
 
@@ -23,5 +25,15 @@ public class IndexServiceImpl implements IndexService {
     @Override
     public Index findIndexByLemmaAndPage(Lemma lemma, Page page) {
         return repository.findIndexByLemmaAndPage(lemma, page);
+    }
+
+    @Override
+    public List<Index> getIndexByPage(Page page) {
+        return repository.findByPage(page);
+    }
+
+    @Override
+    public void deleteIndex(Index index) {
+        repository.delete(index);
     }
 }

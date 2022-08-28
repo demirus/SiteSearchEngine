@@ -10,4 +10,6 @@ public interface LemmaService {
     Lemma getLemmaByLemma(String lemma);
 
     long count();
+
+    void decrementFrequency(Lemma lemma);
 }

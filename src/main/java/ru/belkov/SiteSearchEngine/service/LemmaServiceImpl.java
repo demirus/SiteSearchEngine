@@ -36,4 +36,13 @@ public class LemmaServiceImpl implements LemmaService {
     public long count() {
         return repository.count();
     }
+
+    @Override
+    public synchronized void decrementFrequency(Lemma lemma) {
+        Lemma lemmaDB = repository.findLemmaByLemmaAndSite(lemma.getLemma(), lemma.getSite());
+        if (lemmaDB.getFrequency() != 0) {
+            lemmaDB.setFrequency(lemmaDB.getFrequency() - 1);
+        }
+        repository.save(lemmaDB);
+    }
 }

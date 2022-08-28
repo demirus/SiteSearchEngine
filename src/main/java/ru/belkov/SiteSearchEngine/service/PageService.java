@@ -8,4 +8,6 @@ public interface PageService {
     Page updateByPathAndSite(Page page);
 
     long count();
+
+    Page getByUrl(String url);
 }

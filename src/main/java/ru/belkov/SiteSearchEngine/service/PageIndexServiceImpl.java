@@ -4,14 +4,19 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
+import ru.belkov.SiteSearchEngine.enums.SiteStatus;
+import ru.belkov.SiteSearchEngine.model.SiteParser;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -24,11 +29,16 @@ public class PageIndexServiceImpl implements PageIndexService {
 
     private final LemmaService lemmaService;
 
-    public PageIndexServiceImpl(SiteParserConfig siteParserConfig, PageService pageService, IndexService indexService, LemmaService lemmaService) {
+    private final SiteService siteService;
+
+    private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
+
+    public PageIndexServiceImpl(SiteParserConfig siteParserConfig, PageService pageService, IndexService indexService, LemmaService lemmaService, SiteService siteService) {
         this.siteParserConfig = siteParserConfig;
         this.pageService = pageService;
         this.indexService = indexService;
         this.lemmaService = lemmaService;
+        this.siteService = siteService;
     }
 
     @Override
@@ -40,17 +50,51 @@ public class PageIndexServiceImpl implements PageIndexService {
                 if (site == null) {
                     return false;
                 }
+                page = new Page();
+                page.setPath(url);
+                page.setContent("");
+                page.setCode(0);
+                page.setSite(site);
+                if (pageService.addIfNotExists(page)) {
+                    site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+                    site.setStatus(SiteStatus.INDEXING);
+                    siteService.updateSiteByUrl(site);
+                    if (addPageToIndex(page) != null) {
+                        return true;
+                    }
+                }
             } else {
                 clearPageData(page);
-                addPageToIndex(page);
+                if (addPageToIndex(page) != null) {
+                    return true;
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.toString());
         }
-        return true;
+        return false;
     }
 
-    private void addPageToIndex(Page page) throws IOException {
+    @Override
+    public Document indexPage(String url, Site site) {
+        try {
+            Page page = new Page();
+            page.setPath(url);
+            page.setContent("");
+            page.setCode(0);
+            page.setSite(site);
+            if (pageService.addIfNotExists(page)) {
+                site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+                site.setStatus(SiteStatus.INDEXING);
+                siteService.updateSiteByUrl(site);
+                return addPageToIndex(page);
+            }
+        } catch (Exception e) {
+            logger.error(e.toString());
+        }
+        return null;
+    }
+    private Document addPageToIndex(Page page) throws IOException {
         String url = page.getPath();
         Connection.Response response = createResponse(url);
         String contentType = response.contentType();
@@ -60,10 +104,12 @@ public class PageIndexServiceImpl implements PageIndexService {
             page.setCode(response.statusCode());
             page = pageService.updateByPathAndSite(page);
             createLemmasAndIndices(doc, page);
+            return doc;
         } else {
             page.setCode(response.statusCode());
             pageService.updateByPathAndSite(page);
         }
+        return null;
     }
 
     private Connection.Response createResponse(String url) throws IOException {

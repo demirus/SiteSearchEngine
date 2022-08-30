@@ -30,6 +30,8 @@ public class SiteParserService {
 
     private final SiteService siteService;
 
+    private final PageIndexService pageIndexService;
+
     private static Map<Site, Timestamp> statusTimeMap = new HashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger(SiteParserService.class);
@@ -39,12 +41,13 @@ public class SiteParserService {
     private ForkJoinPool forkJoinPool;
 
     @Autowired
-    public SiteParserService(SiteParserConfig siteParserConfig, IndexService indexService, LemmaService lemmaService, PageService pageService, SiteService siteService) {
+    public SiteParserService(SiteParserConfig siteParserConfig, IndexService indexService, LemmaService lemmaService, PageService pageService, SiteService siteService, PageIndexService pageIndexService) {
         this.siteParserConfig = siteParserConfig;
         this.indexService = indexService;
         this.lemmaService = lemmaService;
         this.pageService = pageService;
         this.siteService = siteService;
+        this.pageIndexService = pageIndexService;
     }
 
     @EventListener(ContextRefreshedEvent.class)
@@ -62,7 +65,7 @@ public class SiteParserService {
                 site.setId(null);
                 site.setStatus(SiteStatus.INDEXING);
                 siteService.addIfNotExists(site);
-                SiteParser siteParser = new SiteParser(site, site.getUrl(), siteParserConfig, pageService, lemmaService, indexService, siteService);
+                SiteParser siteParser = new SiteParser(site, site.getUrl(), siteParserConfig, pageService, lemmaService, indexService, siteService, pageIndexService);
                 ForkJoinPool.commonPool().execute(siteParser);
             }
         }

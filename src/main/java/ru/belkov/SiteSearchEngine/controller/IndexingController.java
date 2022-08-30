@@ -21,37 +21,37 @@ public class IndexingController {
     }
 
     @GetMapping("/startIndexing")
-    public Map<String, String> startIndexing() {
-        Map<String, String> answer = new HashMap<>();
+    public Map<String, Object> startIndexing() {
+        Map<String, Object> answer = new HashMap<>();
         if (siteParserService.isIndexing()) {
-            answer.put("result", "false");
+            answer.put("result", false);
             answer.put("error", "Индексация уже запущена");
         } else {
             siteParserService.startParsing();
-            answer.put("result", "true");
+            answer.put("result", true);
         }
         return answer;
     }
 
     @GetMapping("/stopIndexing")
-    public Map<String, String> stopIndexing() {
-        Map<String, String> answer = new HashMap<>();
+    public Map<String, Object> stopIndexing() {
+        Map<String, Object> answer = new HashMap<>();
         if (!siteParserService.stopIndexing()) {
-            answer.put("result", "false");
+            answer.put("result", false);
             answer.put("error", "Индексация не запущена");
         } else {
-            answer.put("result", "true");
+            answer.put("result", true);
         }
         return answer;
     }
 
     @PostMapping("/indexPage")
-    public Map<String, String> indexPage(@RequestParam String url) {
-        Map<String, String> answer = new HashMap<>();
+    public Map<String, Object> indexPage(@RequestParam String url) {
+        Map<String, Object> answer = new HashMap<>();
         if (pageIndexService.indexPage(url)) {
-            answer.put("result", "true");
+            answer.put("result", true);
         } else {
-            answer.put("result", "false");
+            answer.put("result", false);
             answer.put("error", "Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
         }
         return answer;

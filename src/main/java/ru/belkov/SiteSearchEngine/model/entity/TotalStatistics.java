@@ -30,11 +30,11 @@ public class TotalStatistics {
         this.lemmas = lemmas;
     }
 
-    public boolean isIndexing() {
+    public boolean getIsIndexing() {
         return isIndexing;
     }
 
-    public void setIndexing(boolean indexing) {
+    public void setIsIndexing(boolean indexing) {
         isIndexing = indexing;
     }
 }

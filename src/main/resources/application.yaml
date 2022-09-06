@@ -12,3 +12,5 @@ parser:
     name2 : http://sibuch.ru/
 search:
   maxLemmaFrequency: 100
+web-interface :
+  path: admin

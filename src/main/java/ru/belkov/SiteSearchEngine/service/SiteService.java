@@ -15,4 +15,5 @@ public interface SiteService {
     @Transactional
     void deleteAll();
     long count();
+    Site getByUrl(String url);
 }

@@ -52,4 +52,9 @@ public class SiteServiceImpl implements SiteService{
     public long count() {
         return siteRepository.count();
     }
+
+    @Override
+    public Site getByUrl(String url) {
+        return siteRepository.getByUrl(url);
+    }
 }

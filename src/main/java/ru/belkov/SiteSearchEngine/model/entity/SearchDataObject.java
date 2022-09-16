@@ -1,6 +1,6 @@
 package ru.belkov.SiteSearchEngine.model.entity;
 
-public class SearchPage {
+public class SearchDataObject {
     public String uri;
 
     public String title;
@@ -9,10 +9,10 @@ public class SearchPage {
 
     public Double relevance;
 
-    public SearchPage() {
+    public SearchDataObject() {
     }
 
-    public SearchPage(String uri, String title, String snippet, Double relevance) {
+    public SearchDataObject(String uri, String title, String snippet, Double relevance) {
         this.uri = uri;
         this.title = title;
         this.snippet = snippet;

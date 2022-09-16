@@ -32,34 +32,62 @@ public class SearchServiceImpl implements SearchService {
 
     private final SearchServiceConfig searchConfig;
 
-    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig, SearchServiceConfig searchConfig) {
+    private final SiteService siteService;
+
+    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig, SearchServiceConfig searchConfig, SiteService siteService) {
         this.lemmaService = lemmaService;
         this.indexService = indexService;
         this.parserConfig = parserConfig;
         this.searchConfig = searchConfig;
+        this.siteService = siteService;
     }
 
     @Override
-    public List<SearchPage> search(String searchRequest, Site site) {
-//        List<Lemma> lemmas =
-        return null;
-    }
-
-    @Override
-    public List<SearchPage> search(String searchRequest) {
+    public SearchResponse search(String searchRequest, Site site) {
+        SearchResponse searchResponse = new SearchResponse();
         try {
-            List<Lemma> lemmas = getLemmasFromRequest(searchRequest);
+            List<Lemma> lemmas = getLemmasFromRequest(searchRequest, site);
             deleteAllLemmasWithTooHighFrequency(lemmas);
             if (lemmas.isEmpty()) {
-                return new ArrayList<>();
+                return searchResponse;
             }
             Lemma rarestLemma = lemmas.get(0);
             Collection<Index> indexes = rarestLemma.getIndexes();
-            return getPagesWithLemmas(indexes, lemmas);
+            List<SearchDataObject> searchDataObjects = getPagesWithLemmas(indexes, lemmas);
+            searchResponse.setResult(true);
+            searchResponse.setCount(searchDataObjects.size());
+            searchResponse.setData(searchDataObjects);
+            return searchResponse;
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
-        return null;
+        return searchResponse;
+    }
+
+    @Override
+    public SearchResponse search(String searchRequest) {
+        SearchResponse searchResponse = new SearchResponse();
+        try {
+            List<Site> sites = siteService.getAll();
+            List<Lemma> lemmas = new ArrayList<>();
+            for (Site site : sites) {
+                lemmas.addAll(getLemmasFromRequest(searchRequest, site));
+            }
+            deleteAllLemmasWithTooHighFrequency(lemmas);
+            if (lemmas.isEmpty()) {
+                return searchResponse;
+            }
+            Lemma rarestLemma = lemmas.get(0);
+            Collection<Index> indexes = rarestLemma.getIndexes();
+            List<SearchDataObject> searchDataObjects = getPagesWithLemmas(indexes, lemmas);
+            searchResponse.setResult(true);
+            searchResponse.setCount(searchDataObjects.size());
+            searchResponse.setData(searchDataObjects);
+            return searchResponse;
+        } catch (IOException | EntityNotFoundException e) {
+            logger.error(e.toString());
+        }
+        return searchResponse;
     }
 
     private void deleteAllLemmasWithTooHighFrequency(List<Lemma> lemmas) {
@@ -67,20 +95,18 @@ public class SearchServiceImpl implements SearchService {
         lemmas.removeIf(l -> l.getFrequency() >= configMaxFrequency);
     }
 
-    private List<Lemma> getLemmasFromRequest(String request) throws IOException {
+    private List<Lemma> getLemmasFromRequest(String request, Site site) throws IOException {
         Map<String, Integer> stringLemmas = LemmasUtil.getLemmas(request, Arrays.asList(new LemmasLanguageRussian(), new LemmasLanguageEnglish()));
         List<Lemma> lemmas = new ArrayList<>();
         for (String stringLemma : stringLemmas.keySet()) {
-            Lemma lemma = lemmaService.getLemmaByLemma(stringLemma);
-            if (lemma != null) {
-                lemmas.add(lemma);
-            }
+            List<Lemma> lemmasList = lemmaService.getLemmasByLemma(stringLemma);
+            lemmas.addAll(lemmasList);
         }
         lemmas.sort(Comparator.comparing(Lemma::getFrequency));
         return lemmas;
     }
 
-    private List<SearchPage> getPagesWithLemmas(Collection<Index> indexes, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
+    private List<SearchDataObject> getPagesWithLemmas(Collection<Index> indexes, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
         List<Index> indexList = new ArrayList<>(indexes);
         indexList.removeIf(index -> {
             Page page = index.getPage();
@@ -92,22 +118,22 @@ public class SearchServiceImpl implements SearchService {
             return false;
         });
         Set<Page> pages = indexList.stream().map(Index::getPage).collect(Collectors.toSet());
-        return createSearchPages(pages, lemmas);
+        return createSearchDataObjects(pages, lemmas);
     }
 
-    private List<SearchPage> createSearchPages(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
-        List<SearchPage> searchPages = new ArrayList<>();
+    private List<SearchDataObject> createSearchDataObjects(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
+        List<SearchDataObject> searchDataObjects = new ArrayList<>();
         double maxAbsoluteRelevance = getMaxAbsoluteRelevance(pages, lemmas);
         for (Page page : pages) {
-            SearchPage searchPage = new SearchPage();
-            searchPage.uri = page.getPath();
-            searchPage.title = page.getTitle();
-            searchPage.relevance = getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance;
-            searchPage.snippet = getSnippet(page, lemmas);
-            searchPages.add(searchPage);
+            SearchDataObject searchDataObject = new SearchDataObject();
+            searchDataObject.uri = page.getPath();
+            searchDataObject.title = page.getTitle();
+            searchDataObject.relevance = getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance;
+            searchDataObject.snippet = getSnippet(page, lemmas);
+            searchDataObjects.add(searchDataObject);
         }
-        searchPages.sort(Comparator.comparingDouble(sp -> -sp.relevance));
-        return searchPages;
+        searchDataObjects.sort(Comparator.comparingDouble(sp -> -sp.relevance));
+        return searchDataObjects;
     }
 
     private double getMaxAbsoluteRelevance(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException {

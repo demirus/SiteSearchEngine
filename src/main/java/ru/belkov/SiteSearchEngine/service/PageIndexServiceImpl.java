@@ -79,7 +79,7 @@ public class PageIndexServiceImpl implements PageIndexService {
     public Document indexPage(String url, Site site) {
         try {
             Page page = new Page();
-            page.setPath(url);
+            page.setPath(convertPathToRelative(site.getUrl(), url));
             page.setContent("");
             page.setCode(0);
             page.setSite(site);
@@ -95,7 +95,7 @@ public class PageIndexServiceImpl implements PageIndexService {
         return null;
     }
     private Document addPageToIndex(Page page) throws IOException {
-        String url = page.getPath();
+        String url = page.getSite().getUrl() + page.getPath();
         Connection.Response response = createResponse(url);
         String contentType = response.contentType();
         if (contentType != null && contentType.contains("text/") && (response.statusCode() != 404 || response.statusCode() != 500)) {
@@ -110,6 +110,16 @@ public class PageIndexServiceImpl implements PageIndexService {
             pageService.updateByPathAndSite(page);
         }
         return null;
+    }
+
+    private String convertPathToRelative(String siteName, String absolutePath) {
+        if (!absolutePath.startsWith(siteName)) {
+            return null;
+        } else if (absolutePath.equals(siteName)){
+            return "/";
+        } else {
+            return absolutePath.substring(siteName.length());
+        }
     }
 
     private Connection.Response createResponse(String url) throws IOException {

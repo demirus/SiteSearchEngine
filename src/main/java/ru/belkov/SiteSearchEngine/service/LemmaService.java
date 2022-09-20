@@ -1,6 +1,7 @@
 package ru.belkov.SiteSearchEngine.service;
 
 import ru.belkov.SiteSearchEngine.model.entity.Lemma;
+import ru.belkov.SiteSearchEngine.model.entity.Site;
 
 import java.util.List;
 
@@ -14,4 +15,6 @@ public interface LemmaService {
     long count();
 
     void decrementFrequency(Lemma lemma);
+
+    Lemma getLemmaByLemmaAndSite(String lemma, Site site);
 }

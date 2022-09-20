@@ -46,18 +46,9 @@ public class SearchServiceImpl implements SearchService {
     public SearchResponse search(String searchRequest, Site site) {
         SearchResponse searchResponse = new SearchResponse();
         try {
-            List<Lemma> lemmas = getLemmasFromRequest(searchRequest, site);
-            deleteAllLemmasWithTooHighFrequency(lemmas);
-            if (lemmas.isEmpty()) {
-                return searchResponse;
-            }
-            Lemma rarestLemma = lemmas.get(0);
-            Collection<Index> indexes = rarestLemma.getIndexes();
-            List<SearchDataObject> searchDataObjects = getPagesWithLemmas(indexes, lemmas);
-            searchResponse.setResult(true);
-            searchResponse.setCount(searchDataObjects.size());
-            searchResponse.setData(searchDataObjects);
-            return searchResponse;
+            Map<Site, List<Lemma>> siteLemmasMap = new HashMap<>();
+            siteLemmasMap.put(site, getLemmasFromRequest(searchRequest, site));
+            return getSearchResponse(searchResponse, siteLemmasMap);
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
@@ -69,38 +60,45 @@ public class SearchServiceImpl implements SearchService {
         SearchResponse searchResponse = new SearchResponse();
         try {
             List<Site> sites = siteService.getAll();
-            List<Lemma> lemmas = new ArrayList<>();
+            Map<Site, List<Lemma>> siteLemmasMap = new HashMap<>();
             for (Site site : sites) {
-                lemmas.addAll(getLemmasFromRequest(searchRequest, site));
+                siteLemmasMap.put(site, getLemmasFromRequest(searchRequest, site));
             }
-            deleteAllLemmasWithTooHighFrequency(lemmas);
-            if (lemmas.isEmpty()) {
-                return searchResponse;
-            }
-            Lemma rarestLemma = lemmas.get(0);
-            Collection<Index> indexes = rarestLemma.getIndexes();
-            List<SearchDataObject> searchDataObjects = getPagesWithLemmas(indexes, lemmas);
-            searchResponse.setResult(true);
-            searchResponse.setCount(searchDataObjects.size());
-            searchResponse.setData(searchDataObjects);
-            return searchResponse;
+            return getSearchResponse(searchResponse, siteLemmasMap);
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
         return searchResponse;
     }
 
-    private void deleteAllLemmasWithTooHighFrequency(List<Lemma> lemmas) {
+    private SearchResponse getSearchResponse(SearchResponse searchResponse, Map<Site, List<Lemma>> siteLemmasMap) throws EntityNotFoundException, IOException {
+        deleteAllLemmasWithTooHighFrequency(siteLemmasMap);
+        List<SearchDataObject> searchDataObjects = new ArrayList<>();
+        searchResponse.setData(searchDataObjects);
+        for (Map.Entry<Site, List<Lemma>> entry : siteLemmasMap.entrySet()) {
+            List<Lemma> lemmas = entry.getValue();
+            Lemma rarestLemma = lemmas.get(0);
+            Collection<Index> indexes = rarestLemma.getIndexes();
+            List<SearchDataObject> objects = getPagesWithLemmas(indexes, lemmas);
+            searchResponse.setCount(searchResponse.getCount() + objects.size());
+            searchResponse.getData().addAll(objects);
+        }
+        searchResponse.setResult(true);
+        return searchResponse;
+    }
+
+    private void deleteAllLemmasWithTooHighFrequency(Map<Site, List<Lemma>> siteLemmasMap) {
         long configMaxFrequency = searchConfig.getMaxLemmaFrequency();
-        lemmas.removeIf(l -> l.getFrequency() >= configMaxFrequency);
+        for (Map.Entry<Site, List<Lemma>> entry : siteLemmasMap.entrySet()) {
+            entry.getValue().removeIf(l -> l.getFrequency() >= configMaxFrequency);
+        }
     }
 
     private List<Lemma> getLemmasFromRequest(String request, Site site) throws IOException {
         Map<String, Integer> stringLemmas = LemmasUtil.getLemmas(request, Arrays.asList(new LemmasLanguageRussian(), new LemmasLanguageEnglish()));
         List<Lemma> lemmas = new ArrayList<>();
         for (String stringLemma : stringLemmas.keySet()) {
-            List<Lemma> lemmasList = lemmaService.getLemmasByLemma(stringLemma);
-            lemmas.addAll(lemmasList);
+            lemmas.add(lemmaService.getLemmaByLemmaAndSite(stringLemma, site));
         }
         lemmas.sort(Comparator.comparing(Lemma::getFrequency));
         return lemmas;
@@ -126,13 +124,15 @@ public class SearchServiceImpl implements SearchService {
         double maxAbsoluteRelevance = getMaxAbsoluteRelevance(pages, lemmas);
         for (Page page : pages) {
             SearchDataObject searchDataObject = new SearchDataObject();
-            searchDataObject.uri = page.getPath();
-            searchDataObject.title = page.getTitle();
-            searchDataObject.relevance = getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance;
-            searchDataObject.snippet = getSnippet(page, lemmas);
+            searchDataObject.setSite(page.getSite().getUrl());
+            searchDataObject.setSiteName(page.getSite().getName());
+            searchDataObject.setUri(page.getPath());
+            searchDataObject.setTitle(page.getTitle());
+            searchDataObject.setSnippet(getSnippet(page, lemmas));
+            searchDataObject.setRelevance(getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance);
             searchDataObjects.add(searchDataObject);
         }
-        searchDataObjects.sort(Comparator.comparingDouble(sp -> -sp.relevance));
+        searchDataObjects.sort(Comparator.comparingDouble(sp -> -sp.getRelevance()));
         return searchDataObjects;
     }
 

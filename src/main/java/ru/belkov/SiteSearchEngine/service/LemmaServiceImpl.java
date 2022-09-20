@@ -2,6 +2,7 @@ package ru.belkov.SiteSearchEngine.service;
 
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.model.entity.Lemma;
+import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.repository.LemmaRepository;
 
 import java.util.List;
@@ -46,5 +47,9 @@ public class LemmaServiceImpl implements LemmaService {
             lemmaDB.setFrequency(lemmaDB.getFrequency() - 1);
         }
         repository.save(lemmaDB);
+    }
+    @Override
+    public Lemma getLemmaByLemmaAndSite(String lemma, Site site) {
+        return repository.findLemmaByLemmaAndSite(lemma, site);
     }
 }

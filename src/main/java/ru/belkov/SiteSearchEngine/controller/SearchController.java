@@ -1,5 +1,6 @@
 package ru.belkov.SiteSearchEngine.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,13 +20,16 @@ public class SearchController {
     }
 
     @GetMapping("/search")
-    public SearchResponse search(@RequestParam String query, @RequestParam String offset, @RequestParam String limit, @RequestParam(required = false) String site) {
+    public ResponseEntity<SearchResponse> search(@RequestParam String query, @RequestParam String offset, @RequestParam String limit, @RequestParam(required = false) String site) {
+        SearchResponse searchResponse;
         if (site == null) {
-            return searchService.search(query);
+            searchResponse = searchService.search(query);
+            return new ResponseEntity<>(searchResponse, searchResponse.getHttpStatus());
         } else {
             Site searchedSite = siteService.getByUrl(site);
-            if (site != null) {
-                return searchService.search(query, searchedSite);
+            if (searchedSite != null) {
+                searchResponse = searchService.search(query, searchedSite);
+                return new ResponseEntity<>(searchResponse, searchResponse.getHttpStatus());
             } else {
                 return null;
             }

@@ -6,6 +6,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SearchServiceConfig;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
@@ -44,34 +45,50 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public SearchResponse search(String searchRequest, Site site) {
-        SearchResponse searchResponse = new SearchResponse();
+        if (searchRequest.isEmpty()) {
+            return new SearchResponseError(false, "Задан пустой поисковый запрос", HttpStatus.OK);
+        }
         try {
             Map<Site, List<Lemma>> siteLemmasMap = new HashMap<>();
-            siteLemmasMap.put(site, getLemmasFromRequest(searchRequest, site));
-            return getSearchResponse(searchResponse, siteLemmasMap);
+            List<Lemma> lemmas = getLemmasFromRequest(searchRequest, site);
+            if (!lemmas.isEmpty()) {
+                siteLemmasMap.put(site, lemmas);
+            } else {
+                return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
+            }
+            return getSearchResponse(siteLemmasMap);
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
-        return searchResponse;
+        return new SearchResponseError(false, "Внутренняя ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
     public SearchResponse search(String searchRequest) {
-        SearchResponse searchResponse = new SearchResponse();
+        if (searchRequest.isEmpty()) {
+            return new SearchResponseError(false, "Задан пустой поисковый запрос", HttpStatus.OK);
+        }
         try {
             List<Site> sites = siteService.getAll();
             Map<Site, List<Lemma>> siteLemmasMap = new HashMap<>();
             for (Site site : sites) {
-                siteLemmasMap.put(site, getLemmasFromRequest(searchRequest, site));
+                List<Lemma> lemmas = getLemmasFromRequest(searchRequest, site);
+                if (!lemmas.isEmpty()) {
+                    siteLemmasMap.put(site, lemmas);
+                }
             }
-            return getSearchResponse(searchResponse, siteLemmasMap);
+            if (siteLemmasMap.isEmpty()) {
+                return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
+            }
+            return getSearchResponse(siteLemmasMap);
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
-        return searchResponse;
+        return new SearchResponseError(false, "Внутренняя ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private SearchResponse getSearchResponse(SearchResponse searchResponse, Map<Site, List<Lemma>> siteLemmasMap) throws EntityNotFoundException, IOException {
+    private SearchResponse getSearchResponse(Map<Site, List<Lemma>> siteLemmasMap) throws EntityNotFoundException, IOException {
+        SearchResponseSuccess searchResponse = new SearchResponseSuccess(true, HttpStatus.OK);
         deleteAllLemmasWithTooHighFrequency(siteLemmasMap);
         List<SearchDataObject> searchDataObjects = new ArrayList<>();
         searchResponse.setData(searchDataObjects);
@@ -83,7 +100,6 @@ public class SearchServiceImpl implements SearchService {
             searchResponse.setCount(searchResponse.getCount() + objects.size());
             searchResponse.getData().addAll(objects);
         }
-        searchResponse.setResult(true);
         return searchResponse;
     }
 
@@ -98,7 +114,10 @@ public class SearchServiceImpl implements SearchService {
         Map<String, Integer> stringLemmas = LemmasUtil.getLemmas(request, Arrays.asList(new LemmasLanguageRussian(), new LemmasLanguageEnglish()));
         List<Lemma> lemmas = new ArrayList<>();
         for (String stringLemma : stringLemmas.keySet()) {
-            lemmas.add(lemmaService.getLemmaByLemmaAndSite(stringLemma, site));
+            Lemma lemma = lemmaService.getLemmaByLemmaAndSite(stringLemma, site);
+            if (lemma != null) {
+                lemmas.add(lemma);
+            }
         }
         lemmas.sort(Comparator.comparing(Lemma::getFrequency));
         return lemmas;

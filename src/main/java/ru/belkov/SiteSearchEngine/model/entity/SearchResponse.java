@@ -1,19 +1,15 @@
 package ru.belkov.SiteSearchEngine.model.entity;
 
-import java.util.List;
+import org.springframework.http.HttpStatus;
 
-public class SearchResponse {
-    public boolean result;
-    public int count;
-    public List<SearchDataObject> data;
+public abstract class SearchResponse {
+   private boolean result;
 
-    public SearchResponse() {
-    }
+   private HttpStatus httpStatus;
 
-    public SearchResponse(boolean result, int count, List<SearchDataObject> data) {
+    public SearchResponse(boolean result, HttpStatus httpStatus) {
         this.result = result;
-        this.count = count;
-        this.data = data;
+        this.httpStatus = httpStatus;
     }
 
     public boolean isResult() {
@@ -24,19 +20,11 @@ public class SearchResponse {
         this.result = result;
     }
 
-    public int getCount() {
-        return count;
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
     }
 
-    public void setCount(int count) {
-        this.count = count;
-    }
-
-    public List<SearchDataObject> getData() {
-        return data;
-    }
-
-    public void setData(List<SearchDataObject> data) {
-        this.data = data;
+    public void setHttpStatus(HttpStatus httpStatus) {
+        this.httpStatus = httpStatus;
     }
 }

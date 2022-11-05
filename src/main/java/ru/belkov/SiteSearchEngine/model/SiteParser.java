@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import org.jsoup.nodes.Document;
-import ru.belkov.SiteSearchEngine.service.*;
+import ru.belkov.SiteSearchEngine.services.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;

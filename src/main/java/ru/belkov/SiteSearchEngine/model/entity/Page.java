@@ -4,8 +4,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import javax.persistence.*;
 import java.util.Objects;
+import javax.persistence.Index;
 
 @Entity
+@Table(indexes = @Index(columnList = "path"))
 public class Page {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
@@ -13,7 +15,8 @@ public class Page {
     private Integer id;
 
     @Basic
-    @Column(name = "path", nullable = false, length = -1)
+    @Lob
+    @Column(name = "path", nullable = false)
     private String path;
 
     @Basic
@@ -21,7 +24,8 @@ public class Page {
     private Integer code;
 
     @Basic
-    @Column(name = "content", nullable = false, length = -1)
+    @Lob
+    @Column(name = "content", nullable = false)
     private String content;
 
     @ManyToOne

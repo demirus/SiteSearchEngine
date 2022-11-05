@@ -7,7 +7,7 @@ import ru.belkov.SiteSearchEngine.enums.SiteStatus;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.model.entity.Field;
 import ru.belkov.SiteSearchEngine.repository.FieldRepository;
-import ru.belkov.SiteSearchEngine.service.SiteService;
+import ru.belkov.SiteSearchEngine.services.SiteService;
 
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;

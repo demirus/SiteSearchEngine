@@ -15,7 +15,6 @@ public class Page {
     private Integer id;
 
     @Basic
-    @Lob
     @Column(name = "path", nullable = false)
     private String path;
 
@@ -24,8 +23,7 @@ public class Page {
     private Integer code;
 
     @Basic
-    @Lob
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne

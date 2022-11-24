@@ -33,16 +33,16 @@ public class SearchServiceImpl implements SearchService {
 
     private final IndexService indexService;
 
-    private final SiteParserConfig parserConfig;
+    private final FieldService fieldService;
 
     private final SearchServiceConfig searchConfig;
 
     private final SiteService siteService;
 
-    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig, SearchServiceConfig searchConfig, SiteService siteService) {
+    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig, FieldService fieldService, SearchServiceConfig searchConfig, SiteService siteService) {
         this.lemmaService = lemmaService;
         this.indexService = indexService;
-        this.parserConfig = parserConfig;
+        this.fieldService = fieldService;
         this.searchConfig = searchConfig;
         this.siteService = siteService;
     }
@@ -185,7 +185,7 @@ public class SearchServiceImpl implements SearchService {
     private String getSnippet(Page page, List<Lemma> lemmas) throws IOException {
         Map<String, String> fragments = new HashMap<>();
         Document doc = Jsoup.parse(page.getContent());
-        for (Field field : parserConfig.getFields()) {
+        for (Field field : fieldService.getAll()) {
             Elements elements = doc.select(field.getSelector());
             Map<String, String> docLemmas = LemmasUtil.getLemmasWithOriginalWords(elements.text(), Arrays.asList(new LemmasLanguageRussian(), new LemmasLanguageEnglish()));
             for (Lemma lemma : lemmas) {

@@ -30,17 +30,10 @@ public class SiteParserConfig {
 
     private final SiteService siteService;
 
-    private Iterable<Field> fields;
-
     @Autowired
     public SiteParserConfig(FieldRepository fieldRepository, SiteService siteService) {
         this.fieldRepository = fieldRepository;
         this.siteService = siteService;
-    }
-
-    @PostConstruct
-    private void initFields() {
-        fields = fieldRepository.findAll();
     }
 
     @PostConstruct
@@ -81,10 +74,6 @@ public class SiteParserConfig {
 
     public void setReferrer(String referrer) {
         this.referrer = referrer;
-    }
-
-    public Iterable<Field> getFields() {
-        return fields;
     }
 
     public List<Site> getSites() {

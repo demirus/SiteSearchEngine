@@ -31,14 +31,17 @@ public class PageIndexServiceImpl implements PageIndexService {
 
     private final SiteService siteService;
 
+    private final FieldService fieldService;
+
     private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
 
-    public PageIndexServiceImpl(SiteParserConfig siteParserConfig, PageService pageService, IndexService indexService, LemmaService lemmaService, SiteService siteService) {
+    public PageIndexServiceImpl(SiteParserConfig siteParserConfig, PageService pageService, IndexService indexService, LemmaService lemmaService, SiteService siteService, FieldService fieldService) {
         this.siteParserConfig = siteParserConfig;
         this.pageService = pageService;
         this.indexService = indexService;
         this.lemmaService = lemmaService;
         this.siteService = siteService;
+        this.fieldService = fieldService;
     }
 
     @Override
@@ -133,7 +136,7 @@ public class PageIndexServiceImpl implements PageIndexService {
 
     private void createLemmasAndIndices(Document doc, Page page) throws IOException {
         Set<Lemma> lemmaSet = new HashSet<>();
-        for (Field field : siteParserConfig.getFields()) {
+        for (Field field : fieldService.getAll()) {
             Elements elements = doc.select(field.getSelector());
             Map<String, Integer> lemmas = LemmasUtil.getLemmas(elements.text(), Arrays.asList(new LemmasLanguageRussian(), new LemmasLanguageEnglish()));
             for (Map.Entry<String, Integer> entry : lemmas.entrySet()) {

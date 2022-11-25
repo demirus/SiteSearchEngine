@@ -29,10 +29,11 @@ public class Site {
     @Basic
     @Column(name = "name")
     private String name;
-    @OneToMany(mappedBy = "site")
+    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Page> pages;
-    @OneToMany(mappedBy = "site")
+    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Lemma> lemmas;
+
     public Integer getId() {
         return id;
     }
@@ -84,9 +85,11 @@ public class Site {
     public List<Page> getPages() {
         return pages;
     }
+
     public void setPages(List<Page> pages) {
         this.pages = pages;
     }
+
     public List<Lemma> getLemmas() {
         return lemmas;
     }

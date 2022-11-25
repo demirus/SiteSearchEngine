@@ -16,7 +16,7 @@ public class Lemma {
     @Basic
     @Column(name = "frequency")
     private Integer frequency;
-    @OneToMany(mappedBy = "lemma", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "lemma", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Collection<Index> indexes;
     @ManyToOne
     @JoinColumn(name = "site_id")

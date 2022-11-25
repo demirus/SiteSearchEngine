@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "search_index")
+@Table(name = "index")
 public class Index {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id

@@ -60,7 +60,7 @@ public class SearchServiceImpl implements SearchService {
             } else {
                 return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
             }
-            return getSearchResponse(siteLemmasMap);
+            return getSearchResponse(siteLemmasMap, searchRequest);
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
@@ -84,14 +84,14 @@ public class SearchServiceImpl implements SearchService {
             if (siteLemmasMap.isEmpty()) {
                 return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
             }
-            return getSearchResponse(siteLemmasMap);
+            return getSearchResponse(siteLemmasMap, searchRequest);
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
         return new SearchResponseError(false, "Внутренняя ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private SearchResponse getSearchResponse(Map<Site, List<Lemma>> siteLemmasMap) throws EntityNotFoundException, IOException {
+    private SearchResponse getSearchResponse(Map<Site, List<Lemma>> siteLemmasMap, String query) throws EntityNotFoundException, IOException {
         SearchResponseSuccess searchResponse = new SearchResponseSuccess(true, HttpStatus.OK);
         deleteAllLemmasWithTooHighFrequency(siteLemmasMap);
         List<SearchDataObject> searchDataObjects = new ArrayList<>();
@@ -100,7 +100,8 @@ public class SearchServiceImpl implements SearchService {
             List<Lemma> lemmas = entry.getValue();
             Lemma rarestLemma = lemmas.get(0);
             Collection<Index> indexes = rarestLemma.getIndexes();
-            List<SearchDataObject> objects = getPagesWithLemmas(indexes, lemmas);
+            Set<Page> pages = getPagesWithLemmas(indexes, lemmas);
+            List<SearchDataObject> objects = createSearchDataObjects(pages, lemmas, query);
             searchResponse.setCount(searchResponse.getCount() + objects.size());
             searchResponse.getData().addAll(objects);
         }
@@ -127,7 +128,7 @@ public class SearchServiceImpl implements SearchService {
         return lemmas;
     }
 
-    private List<SearchDataObject> getPagesWithLemmas(Collection<Index> indexes, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
+    private Set<Page> getPagesWithLemmas(Collection<Index> indexes, List<Lemma> lemmas) {
         List<Index> indexList = new ArrayList<>(indexes);
         indexList.removeIf(index -> {
             Page page = index.getPage();
@@ -138,22 +139,24 @@ public class SearchServiceImpl implements SearchService {
             }
             return false;
         });
-        Set<Page> pages = indexList.stream().map(Index::getPage).collect(Collectors.toSet());
-        return createSearchDataObjects(pages, lemmas);
+        return indexList.stream().map(Index::getPage).collect(Collectors.toSet());
     }
 
-    private List<SearchDataObject> createSearchDataObjects(Set<Page> pages, List<Lemma> lemmas) throws EntityNotFoundException, IOException {
+    private List<SearchDataObject> createSearchDataObjects(Set<Page> pages, List<Lemma> lemmas, String query) throws EntityNotFoundException, IOException {
         List<SearchDataObject> searchDataObjects = new ArrayList<>();
         double maxAbsoluteRelevance = getMaxAbsoluteRelevance(pages, lemmas);
         for (Page page : pages) {
-            SearchDataObject searchDataObject = new SearchDataObject();
-            searchDataObject.setSite(page.getSite().getUrl());
-            searchDataObject.setSiteName(page.getSite().getName());
-            searchDataObject.setUri(page.getPath());
-            searchDataObject.setTitle(page.getTitle());
-            searchDataObject.setSnippet(getSnippet(page, lemmas));
-            searchDataObject.setRelevance(getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance);
-            searchDataObjects.add(searchDataObject);
+            String snippet = getSnippet(page, query);
+            if (!snippet.equals("")) {
+                SearchDataObject searchDataObject = new SearchDataObject();
+                searchDataObject.setSite(page.getSite().getUrl());
+                searchDataObject.setSiteName(page.getSite().getName());
+                searchDataObject.setUri(page.getPath());
+                searchDataObject.setTitle(page.getTitle());
+                searchDataObject.setSnippet(snippet);
+                searchDataObject.setRelevance(getAbsoluteRelevance(page, lemmas) / maxAbsoluteRelevance);
+                searchDataObjects.add(searchDataObject);
+            }
         }
         searchDataObjects.sort(Comparator.comparingDouble(sp -> -sp.getRelevance()));
         return searchDataObjects;
@@ -182,28 +185,8 @@ public class SearchServiceImpl implements SearchService {
         return relevance;
     }
 
-    private String getSnippet(Page page, List<Lemma> lemmas) throws IOException {
-        Map<String, String> fragments = new HashMap<>();
-        Document doc = Jsoup.parse(page.getContent());
-        for (Field field : fieldService.getAll()) {
-            Elements elements = doc.select(field.getSelector());
-            Map<String, String> docLemmas = LemmasUtil.getLemmasWithOriginalWords(elements.text(), Arrays.asList(new LemmasLanguageRussian(), new LemmasLanguageEnglish()));
-            for (Lemma lemma : lemmas) {
-                if (docLemmas.containsKey(lemma.getLemma())) {
-                    String originalWord = docLemmas.get(lemma.getLemma());
-                    String fragment = getHtmlFragmentWithWord(originalWord, page);
-                    String clearedFromBTag = fragment.replaceAll("<b>", "").replaceAll("</b>", "");
-                    if (!fragments.containsKey(clearedFromBTag)) {
-                        fragments.put(clearedFromBTag, fragment);
-                    } else {
-                        String textBetweenTag = fragment.substring(fragment.indexOf("<b>") + 3, fragment.indexOf("</b>"));
-                        fragments.replace(clearedFromBTag, fragments.get(clearedFromBTag).replaceAll(textBetweenTag, "<b>" + textBetweenTag + "</b>"));
-                    }
-                }
-            }
-
-        }
-        return String.join("\n", fragments.values());
+    private String getSnippet(Page page, String query) {
+        return getHtmlFragmentWithWord(query, page);
     }
 
     private String getHtmlFragmentWithWord(String word, Page page) {

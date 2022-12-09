@@ -5,8 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import ru.belkov.SiteSearchEngine.enums.SiteStatus;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
-import ru.belkov.SiteSearchEngine.model.entity.Field;
-import ru.belkov.SiteSearchEngine.repository.FieldRepository;
 import ru.belkov.SiteSearchEngine.services.SiteService;
 
 import javax.annotation.PostConstruct;
@@ -26,13 +24,11 @@ public class SiteParserConfig {
 
     private String referrer;
 
-    private final FieldRepository fieldRepository;
-
     private final SiteService siteService;
 
+
     @Autowired
-    public SiteParserConfig(FieldRepository fieldRepository, SiteService siteService) {
-        this.fieldRepository = fieldRepository;
+    public SiteParserConfig(SiteService siteService) {
         this.siteService = siteService;
     }
 
@@ -43,7 +39,7 @@ public class SiteParserConfig {
             site.setUrl(entry.getValue());
             site.setName(entry.getKey());
             site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-            site.setStatus(SiteStatus.INDEXING);
+            site = siteService.addIfNotExists(site);
             sites.add(site);
         }
     }

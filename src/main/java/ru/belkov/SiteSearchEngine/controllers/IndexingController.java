@@ -5,17 +5,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.belkov.SiteSearchEngine.services.PageIndexService;
-import ru.belkov.SiteSearchEngine.services.SiteParserService;
+import ru.belkov.SiteSearchEngine.services.SiteParserServiceImpl;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 public class IndexingController {
-    private SiteParserService siteParserService;
+    private SiteParserServiceImpl siteParserService;
     private PageIndexService pageIndexService;
 
-    public IndexingController(SiteParserService siteParserService, PageIndexService pageIndexService) {
+
+    public IndexingController(SiteParserServiceImpl siteParserService, PageIndexService pageIndexService) {
         this.siteParserService = siteParserService;
         this.pageIndexService = pageIndexService;
     }
@@ -54,6 +55,22 @@ public class IndexingController {
             answer.put("result", false);
             answer.put("error", "Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
         }
+        return answer;
+    }
+
+    @PostMapping("/indexSite")
+    public Map<String, Object> indexPage(@RequestParam String name, @RequestParam String url) {
+        siteParserService.parseSite(name, url);
+        Map<String, Object> answer = new HashMap<>();
+        answer.put("result", true);
+        return answer;
+    }
+
+    @PostMapping("/deleteSite")
+    public Map<String, Object> deleteSite(@RequestParam String url) {
+        siteParserService.deleteSite(url);
+        Map<String, Object> answer = new HashMap<>();
+        answer.put("result", true);
         return answer;
     }
 }

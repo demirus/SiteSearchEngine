@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/search_engine
     username: postgres
-    password: *******
+    password: ******
   jpa:
     properties:
       dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -15,9 +15,13 @@ spring:
 parser:
   userAgent: Chrome/4.0.249.0 Safari/532.5
   referrer: https://www.google.com
-  initSites:
-    name1 :
-    name2 :
+  configSites:
+    -
+      name: ******
+      url: ******
+    -
+      name: ******
+      url: ******
 search:
   maxLemmaFrequency: 100
 web-interface :

@@ -1,30 +1,31 @@
 package ru.belkov.SiteSearchEngine.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import ru.belkov.SiteSearchEngine.enums.SiteStatus;
+import ru.belkov.SiteSearchEngine.model.SiteParser;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.services.SiteService;
 
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Component
 @ConfigurationProperties("parser")
 public class SiteParserConfig {
-    private List<Site> sites = new ArrayList<>();
-
-    private Map<String, String> initSites;
+    private List<Map<String, String>> configSites;
 
     private String userAgent;
 
     private String referrer;
 
     private final SiteService siteService;
+
+    private static final Logger logger = LoggerFactory.getLogger(SiteParserConfig.class);
 
 
     @Autowired
@@ -33,27 +34,28 @@ public class SiteParserConfig {
     }
 
     @PostConstruct
-    private void initSites() {
-        for (Map.Entry<String, String> entry : initSites.entrySet()) {
+    private void initSites() throws InstantiationException {
+        for (Map<String, String> configSite : configSites) {
             Site site = new Site();
-            site.setUrl(entry.getValue());
-            site.setName(entry.getKey());
+            String name = configSite.get("name");
+            String url = configSite.get("url");
+            if (name == null || url == null) {
+                logger.error("Missing argument in configSites needs name or url");
+                throw new InstantiationException("Missing argument in configSites needs name or url");
+            }
+            site.setName(name);
+            site.setUrl(url);
             site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-            site = siteService.addIfNotExists(site);
-            sites.add(site);
+            siteService.addIfNotExists(site);
         }
     }
 
-    public void setInitSites(Map<String, String> initSites) {
-        this.initSites = initSites;
+    public void setConfigSites(List<Map<String, String>> configSites) {
+        this.configSites = configSites;
     }
 
-    public Map<String, String> getInitSites() {
-        return initSites;
-    }
-
-    public void setSites(Map<String, String> initSites) {
-        this.initSites = initSites;
+    public List<Map<String, String>> getConfigSites() {
+        return configSites;
     }
 
     public String getUserAgent() {
@@ -70,13 +72,5 @@ public class SiteParserConfig {
 
     public void setReferrer(String referrer) {
         this.referrer = referrer;
-    }
-
-    public List<Site> getSites() {
-        return sites;
-    }
-
-    public void setSites(List<Site> sites) {
-        this.sites = sites;
     }
 }

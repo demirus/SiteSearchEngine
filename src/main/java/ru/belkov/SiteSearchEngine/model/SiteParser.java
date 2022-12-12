@@ -2,7 +2,6 @@ package ru.belkov.SiteSearchEngine.model;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import org.jsoup.nodes.Document;
 import ru.belkov.SiteSearchEngine.services.*;
@@ -15,42 +14,24 @@ import java.util.stream.Collectors;
 
 
 public class SiteParser extends RecursiveAction {
-
     private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
-
-    private static boolean stop;
-
-    private final PageService pageService;
-
-    private final SiteParserConfig config;
-
-    private final LemmaService lemmaService;
-
-    private final IndexService indexService;
-
-    private final SiteService siteService;
-
     private final Site site;
-
     private String url;
-
     private PageIndexService pageIndexService;
 
-    public SiteParser(Site site, String url, SiteParserConfig config, PageService pageService, LemmaService lemmaService, IndexService indexService, SiteService siteService, PageIndexService pageIndexService) {
+    private SiteManager manager;
+
+    public SiteParser(Site site, String url, SiteManager manager, PageIndexService pageIndexService) {
         this.site = site;
-        this.pageService = pageService;
-        this.config = config;
-        this.lemmaService = lemmaService;
-        this.indexService = indexService;
         this.url = url;
-        this.siteService = siteService;
+        this.manager = manager;
         this.pageIndexService = pageIndexService;
     }
 
     @Override
     protected void compute() {
         try {
-            if (!stop) {
+            if (!manager.isStop()) {
                 Document doc = pageIndexService.indexPage(url, site);
                 if (doc != null) {
                     Set<String> links = getLinks(doc);
@@ -71,7 +52,7 @@ public class SiteParser extends RecursiveAction {
     private List<SiteParser> createSubtasks(Set<String> links) {
         List<SiteParser> dividedTasks = new ArrayList<>();
         for (String link : links) {
-            dividedTasks.add(new SiteParser(site, link, config, pageService, lemmaService, indexService, siteService, pageIndexService));
+            dividedTasks.add(new SiteParser(site, link, manager, pageIndexService));
         }
         return dividedTasks;
     }
@@ -97,13 +78,5 @@ public class SiteParser extends RecursiveAction {
             }
         }
         return false;
-    }
-
-    public static void stopIndexing() {
-        stop = true;
-    }
-
-    public static void startIndexing() {
-        stop = false;
     }
 }

@@ -18,6 +18,10 @@ public class DbInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        initFields();
+    }
+
+    private void initFields() {
         List<Field> fields = fieldService.getAll();
 
         Field title = new Field();

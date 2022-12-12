@@ -9,14 +9,14 @@ import java.util.List;
 
 @Service
 public class StatisticsServiceImpl implements StatisticsService {
-    private final SiteParserService siteParserService;
+    private final SiteParserServiceImpl siteParserService;
     private final LemmaService lemmaService;
 
     private final PageService pageService;
 
     private final SiteService siteService;
 
-    public StatisticsServiceImpl(SiteParserService siteParserService, LemmaService lemmaService, PageService pageService, SiteService siteService) {
+    public StatisticsServiceImpl(SiteParserServiceImpl siteParserService, LemmaService lemmaService, PageService pageService, SiteService siteService) {
         this.siteParserService = siteParserService;
         this.lemmaService = lemmaService;
         this.pageService = pageService;
@@ -47,20 +47,20 @@ public class StatisticsServiceImpl implements StatisticsService {
             String error = site.getLastError();
             if (error == null) {
                 SiteInformationWithoutErrorImpl siteInformationWithoutErrorImpl = new SiteInformationWithoutErrorImpl();
-                siteInformationWithoutErrorImpl.setStatus(site.getStatus().toString());
-                siteInformationWithoutErrorImpl.setStatusTime(site.getStatusTime().toString());
-                siteInformationWithoutErrorImpl.setUrl(site.getUrl());
-                siteInformationWithoutErrorImpl.setName(site.getName());
+                siteInformationWithoutErrorImpl.setStatus(site.getStatus() != null ? site.getStatus().toString() : "");
+                siteInformationWithoutErrorImpl.setStatusTime(site.getStatusTime() != null ? site.getStatusTime().toString(): "");
+                siteInformationWithoutErrorImpl.setUrl(site.getUrl() != null ? site.getUrl() : "");
+                siteInformationWithoutErrorImpl.setName(site.getName() != null ? site.getName() : "");
                 siteInformationWithoutErrorImpl.setLemmas(String.valueOf(site.getLemmas().size()));
                 siteInformationWithoutErrorImpl.setPages(String.valueOf(site.getPages().size()));
                 siteInformationWithoutErrorImplList.add(siteInformationWithoutErrorImpl);
             } else {
                 SiteInformationWithErrorImpl siteInformationWithErrorImpl = new SiteInformationWithErrorImpl();
-                siteInformationWithErrorImpl.setStatus(site.getStatus().toString());
-                siteInformationWithErrorImpl.setStatusTime(site.getStatusTime().toString());
+                siteInformationWithErrorImpl.setStatus(site.getStatus() != null ? site.getStatus().toString() : "");
+                siteInformationWithErrorImpl.setStatusTime(site.getStatusTime() != null ? site.getStatusTime().toString(): "");
                 siteInformationWithErrorImpl.setError(error);
-                siteInformationWithErrorImpl.setUrl(site.getUrl());
-                siteInformationWithErrorImpl.setName(site.getName());
+                siteInformationWithErrorImpl.setUrl(site.getUrl() != null ? site.getUrl() : "");
+                siteInformationWithErrorImpl.setName(site.getName() != null ? site.getName() : "");
                 siteInformationWithErrorImpl.setLemmas(String.valueOf(site.getLemmas().size()));
                 siteInformationWithErrorImpl.setPages(String.valueOf(site.getPages().size()));
                 siteInformationWithoutErrorImplList.add(siteInformationWithErrorImpl);

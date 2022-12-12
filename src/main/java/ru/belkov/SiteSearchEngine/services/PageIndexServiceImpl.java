@@ -54,13 +54,12 @@ public class PageIndexServiceImpl implements PageIndexService {
                     return false;
                 }
                 page = new Page();
-                page.setPath(url);
+                page.setPath(convertPathToRelative(site.getUrl(), url));
                 page.setContent("");
                 page.setCode(0);
                 page.setSite(site);
                 if (pageService.addIfNotExists(page)) {
                     site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-                    site.setStatus(SiteStatus.INDEXING);
                     siteService.updateSiteByUrl(site);
                     if (addPageToIndex(page) != null) {
                         return true;
@@ -88,7 +87,6 @@ public class PageIndexServiceImpl implements PageIndexService {
             page.setSite(site);
             if (pageService.addIfNotExists(page)) {
                 site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-                site.setStatus(SiteStatus.INDEXING);
                 siteService.updateSiteByUrl(site);
                 return addPageToIndex(page);
             }
@@ -176,7 +174,7 @@ public class PageIndexServiceImpl implements PageIndexService {
     }
 
     private Site findSite(String url) {
-        List<Site> sites = siteParserConfig.getSites();
+        List<Site> sites = siteService.getAll();
         for (Site site : sites) {
             if (url.startsWith(site.getUrl())) {
                 return site;

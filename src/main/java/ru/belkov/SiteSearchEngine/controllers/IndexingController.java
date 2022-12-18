@@ -1,10 +1,13 @@
 package ru.belkov.SiteSearchEngine.controllers;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.belkov.SiteSearchEngine.services.PageIndexService;
+import ru.belkov.SiteSearchEngine.services.SiteParserService;
 import ru.belkov.SiteSearchEngine.services.SiteParserServiceImpl;
 
 import java.util.HashMap;
@@ -12,7 +15,7 @@ import java.util.Map;
 
 @RestController
 public class IndexingController {
-    private SiteParserServiceImpl siteParserService;
+    private SiteParserService siteParserService;
     private PageIndexService pageIndexService;
 
 
@@ -22,27 +25,49 @@ public class IndexingController {
     }
 
     @GetMapping("/startIndexing")
-    public Map<String, Object> startIndexing() {
-        Map<String, Object> answer = new HashMap<>();
+    public ResponseEntity<Map<String, String>> startIndexing() {
+        ResponseEntity<Map<String, String>> response;
         if (siteParserService.isIndexing()) {
-            answer.put("result", false);
-            answer.put("error", "Индексация уже запущена");
+            Map<String, String> map = new HashMap<>();
+            map.put("result", "false");
+            map.put("error", "Индексация уже запущена");
+            response = new ResponseEntity<>(map, HttpStatus.OK);
         } else {
             siteParserService.startParsing();
-            answer.put("result", true);
+            Map<String, String> map = new HashMap<>();
+            map.put("result", "true");
+            response = new ResponseEntity<>(map, HttpStatus.OK);
         }
-        return answer;
+        return response;
     }
 
     @GetMapping("/stopIndexing")
-    public Map<String, Object> stopIndexing() {
-        Map<String, Object> answer = new HashMap<>();
+    public ResponseEntity<Map<String, String>> stopIndexing() {
+        ResponseEntity<Map<String, String>> response;
         if (!siteParserService.stopIndexing()) {
-            answer.put("result", false);
-            answer.put("error", "Индексация не запущена");
+            Map<String, String> map = new HashMap<>();
+            map.put("result", "false");
+            map.put("error", "Индексация не запущена");
+            response = new ResponseEntity<>(map, HttpStatus.OK);
         } else {
-            answer.put("result", true);
+            Map<String, String> map = new HashMap<>();
+            map.put("result", "true");
+            response = new ResponseEntity<>(map, HttpStatus.OK);
         }
+        return response;
+    }
+
+    @GetMapping("/stopSiteIndexing")
+    public Map<String, Object> stopSiteIndexing(@RequestParam String url) {
+        Map<String, Object> answer = new HashMap<>();
+        siteParserService.stopParsing(url);
+        return answer;
+    }
+
+    @GetMapping("/startSiteIndexing")
+    public Map<String, Object> startSiteIndexing(@RequestParam String url) {
+        Map<String, Object> answer = new HashMap<>();
+        siteParserService.startParsing(url);
         return answer;
     }
 

@@ -33,7 +33,7 @@ public class PageIndexServiceImpl implements PageIndexService {
 
     private final FieldService fieldService;
 
-    private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(PageIndexServiceImpl.class);
 
     public PageIndexServiceImpl(SiteParserConfig siteParserConfig, PageService pageService, IndexService indexService, LemmaService lemmaService, SiteService siteService, FieldService fieldService) {
         this.siteParserConfig = siteParserConfig;

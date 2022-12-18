@@ -102,4 +102,20 @@ public class SiteParserServiceImpl implements SiteParserService {
         Optional<SiteManager> optionalSiteManager = siteManagers.stream().filter(sm -> sm.getSite() != null && sm.getSite().getUrl().equals(url)).findFirst();
         return optionalSiteManager.orElse(null);
     }
+
+    @Override
+    public void startParsing(String url) {
+        SiteManager siteManager = getSiteManager(url);
+        if (siteManager != null) {
+            siteManager.startParsing();
+        }
+    }
+
+    @Override
+    public void stopParsing(String url) {
+        SiteManager siteManager = getSiteManager(url);
+        if (siteManager != null) {
+            siteManager.stopParsing();
+        }
+    }
 }

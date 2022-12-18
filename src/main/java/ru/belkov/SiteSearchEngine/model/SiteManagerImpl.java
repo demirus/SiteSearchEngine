@@ -1,5 +1,7 @@
 package ru.belkov.SiteSearchEngine.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.belkov.SiteSearchEngine.enums.SiteStatus;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.services.*;
@@ -10,6 +12,7 @@ public class SiteManagerImpl implements SiteManager {
     private Site site;
     private Thread thread;
     private boolean stop = true;
+    private static final Logger logger = LoggerFactory.getLogger(SiteManagerImpl.class);
 
     public SiteManagerImpl(Site site, SiteService siteService, PageIndexService pageIndexService) {
         this.site = site;
@@ -19,6 +22,13 @@ public class SiteManagerImpl implements SiteManager {
 
     @Override
     public void startParsing() {
+        try {
+            if (thread != null && thread.isAlive()) {
+                thread.join();
+            }
+        } catch (Exception e) {
+            logger.error(e.toString());
+        }
         stop = false;
         siteService.deleteSiteByUrl(site);
         site.setLastError("");

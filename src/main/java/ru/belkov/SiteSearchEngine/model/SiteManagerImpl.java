@@ -50,6 +50,13 @@ public class SiteManagerImpl implements SiteManager {
         site.setStatus(SiteStatus.FAILED);
         site.setLastError("Индексация отменена");
         siteService.updateSiteByUrl(site);
+        try {
+            if (thread != null && thread.isAlive()) {
+                thread.join();
+            }
+        } catch (Exception e) {
+            logger.error(e.toString());
+        }
     }
 
     @Override

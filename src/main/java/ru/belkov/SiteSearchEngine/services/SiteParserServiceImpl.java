@@ -94,6 +94,7 @@ public class SiteParserServiceImpl implements SiteParserService {
     public void deleteSite(String url) {
         SiteManager siteManager = getSiteManager(url);
         if (siteManager != null) {
+            siteManager.stopParsing();
             siteService.deleteSiteByUrl(siteManager.getSite());
         }
     }

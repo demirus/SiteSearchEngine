@@ -10,7 +10,7 @@ spring:
       dialect: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
 
 parser:
   userAgent: Chrome/4.0.249.0 Safari/532.5

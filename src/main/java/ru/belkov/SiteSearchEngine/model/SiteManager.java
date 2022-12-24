@@ -7,4 +7,5 @@ public interface SiteManager {
     Site getSite();
     void stopParsing();
     boolean isStop();
+    void deleteSite();
 }

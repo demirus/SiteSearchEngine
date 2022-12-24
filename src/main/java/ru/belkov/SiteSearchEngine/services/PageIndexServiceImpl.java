@@ -6,9 +6,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.enums.SiteStatus;
+import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
 import ru.belkov.SiteSearchEngine.model.SiteParser;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
@@ -16,6 +18,7 @@ import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -72,13 +75,13 @@ public class PageIndexServiceImpl implements PageIndexService {
                 }
             }
         } catch (Exception e) {
-            logger.error(e.toString());
+            logger.error(e.toString(), e);
         }
         return false;
     }
 
     @Override
-    public Document indexPage(String url, Site site) {
+    public Document indexPage(String url, Site site) throws ResponseException {
         try {
             Page page = new Page();
             page.setPath(convertPathToRelative(site.getUrl(), url));
@@ -90,8 +93,12 @@ public class PageIndexServiceImpl implements PageIndexService {
                 siteService.updateSiteByUrl(site);
                 return addPageToIndex(page);
             }
-        } catch (Exception e) {
-            logger.error(e.toString());
+        } catch (UnknownHostException e) {
+            logger.error(e.toString(), e);
+            throw new ResponseException("Задан некорректный url", HttpStatus.NOT_FOUND);
+        }
+        catch (Exception e) {
+            logger.error(e.toString(), e);
         }
         return null;
     }

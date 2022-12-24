@@ -1,5 +1,7 @@
 package ru.belkov.SiteSearchEngine.services;
 
+import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
+
 public interface SiteParserService {
     void parseSite(String name, String url);
 
@@ -11,7 +13,7 @@ public interface SiteParserService {
 
     boolean stopIndexing();
 
-    void deleteSite(String url);
+    void deleteSite(String url) throws ResponseException;
 
     void startParsing(String url);
 

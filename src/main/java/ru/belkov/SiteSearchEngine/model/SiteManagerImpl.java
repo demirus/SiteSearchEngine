@@ -22,21 +22,23 @@ public class SiteManagerImpl implements SiteManager {
 
     @Override
     public void startParsing() {
-        try {
-            if (thread != null && thread.isAlive()) {
-                thread.join();
+        if (site != null) {
+            try {
+                if (thread != null && thread.isAlive()) {
+                    thread.join();
+                }
+            } catch (Exception e) {
+                logger.error(e.toString());
             }
-        } catch (Exception e) {
-            logger.error(e.toString());
+            stop = false;
+            siteService.deleteSiteByUrl(site);
+            site.setLastError("");
+            site.setStatus(SiteStatus.INDEXING);
+            site = siteService.addIfNotExists(site);
+            SiteThread siteThread = new SiteThread(site, this, pageIndexService, siteService);
+            thread = new Thread(siteThread);
+            thread.start();
         }
-        stop = false;
-        siteService.deleteSiteByUrl(site);
-        site.setLastError("");
-        site.setStatus(SiteStatus.INDEXING);
-        site = siteService.addIfNotExists(site);
-        SiteThread siteThread = new SiteThread(site, this, pageIndexService, siteService);
-        thread = new Thread(siteThread);
-        thread.start();
     }
 
     @Override
@@ -46,21 +48,30 @@ public class SiteManagerImpl implements SiteManager {
 
     @Override
     public void stopParsing() {
-        stop = true;
-        site.setStatus(SiteStatus.FAILED);
-        site.setLastError("Индексация отменена");
-        siteService.updateSiteByUrl(site);
-        try {
-            if (thread != null && thread.isAlive()) {
-                thread.join();
+        if (site != null) {
+            stop = true;
+            site.setStatus(SiteStatus.FAILED);
+            site.setLastError("Индексация отменена");
+            siteService.updateSiteByUrl(site);
+            try {
+                if (thread != null && thread.isAlive()) {
+                    thread.join();
+                }
+            } catch (Exception e) {
+                logger.error(e.toString());
             }
-        } catch (Exception e) {
-            logger.error(e.toString());
         }
     }
 
     @Override
     public boolean isStop() {
         return stop;
+    }
+
+    @Override
+    public void deleteSite() {
+        stopParsing();
+        siteService.deleteSiteByUrl(site);
+        site = null;
     }
 }

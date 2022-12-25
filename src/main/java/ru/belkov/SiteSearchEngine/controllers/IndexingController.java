@@ -74,15 +74,22 @@ public class IndexingController {
     }
 
     @PostMapping("/indexPage")
-    public Map<String, Object> indexPage(@RequestParam String url) {
-        Map<String, Object> answer = new HashMap<>();
-        /*if (pageIndexService.indexPage(url)) {
-            answer.put("result", true);
-        } else {
-            answer.put("result", false);
-            answer.put("error", "Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
-        }*/
-        return answer;
+    public ResponseEntity<Map<String, String>> indexPage(@RequestParam String url) {
+        try {
+            pageIndexService.indexPage(url);
+            Map<String, String> answer = formSuccessAnswer();
+            return new ResponseEntity<>(answer, HttpStatus.OK);
+        } catch (ResponseException e) {
+            logger.error(e.getMessage(), e);
+            Map<String, String> answer = formFailureAnswer();
+            answer.put("error", e.getMessage());
+            return new ResponseEntity<>(answer, e.getHttpStatus());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            Map<String, String> answer = formFailureAnswer();
+            answer.put("error", "Непредвиденная ошибка сервера");
+            return new ResponseEntity<>(answer, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/indexSite")

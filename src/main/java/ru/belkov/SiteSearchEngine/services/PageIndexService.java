@@ -6,5 +6,5 @@ import ru.belkov.SiteSearchEngine.model.entity.Site;
 
 public interface PageIndexService {
     boolean indexPage(String url) throws ResponseException;
-    Document indexPage(String url, Site site) throws ResponseException;
+    Document indexPage(String url, Site site);
 }

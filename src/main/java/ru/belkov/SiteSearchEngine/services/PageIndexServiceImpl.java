@@ -48,16 +48,17 @@ public class PageIndexServiceImpl implements PageIndexService {
     }
 
     @Override
-    public boolean indexPage(String url) {
+    public boolean indexPage(String url) throws ResponseException {
         try {
-            Page page = pageService.getByUrl(url);
+            Site site = findSite(url);
+            if (site == null) {
+                throw new ResponseException("Страница находится за пределами индексируемых сайтов", HttpStatus.NOT_FOUND);
+            }
+            String relativePath = convertPathToRelative(site.getUrl(), url);
+            Page page = pageService.getByUrl(relativePath);
             if (page == null) {
-                Site site = findSite(url);
-                if (site == null) {
-                    return false;
-                }
                 page = new Page();
-                page.setPath(convertPathToRelative(site.getUrl(), url));
+                page.setPath(relativePath);
                 page.setContent("");
                 page.setCode(0);
                 page.setSite(site);
@@ -74,14 +75,21 @@ public class PageIndexServiceImpl implements PageIndexService {
                     return true;
                 }
             }
+        } catch (ResponseException e) {
+            logger.error(e.toString(), e);
+            throw new ResponseException(e.getMessage(), e.getHttpStatus());
+        } catch (UnknownHostException e) {
+            logger.error(e.toString(), e);
+            throw new ResponseException("Задан некорректный url", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error(e.toString(), e);
+            throw new ResponseException("Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return false;
     }
 
     @Override
-    public Document indexPage(String url, Site site) throws ResponseException {
+    public Document indexPage(String url, Site site) {
         try {
             Page page = new Page();
             page.setPath(convertPathToRelative(site.getUrl(), url));
@@ -93,15 +101,12 @@ public class PageIndexServiceImpl implements PageIndexService {
                 siteService.updateSiteByUrl(site);
                 return addPageToIndex(page);
             }
-        } catch (UnknownHostException e) {
-            logger.error(e.toString(), e);
-            throw new ResponseException("Задан некорректный url", HttpStatus.NOT_FOUND);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error(e.toString(), e);
         }
         return null;
     }
+
     private Document addPageToIndex(Page page) throws IOException {
         String url = page.getSite().getUrl() + page.getPath();
         Connection.Response response = createResponse(url);
@@ -123,7 +128,7 @@ public class PageIndexServiceImpl implements PageIndexService {
     private String convertPathToRelative(String siteName, String absolutePath) {
         if (!absolutePath.startsWith(siteName)) {
             return null;
-        } else if (absolutePath.equals(siteName)){
+        } else if (absolutePath.equals(siteName)) {
             return "/";
         } else {
             return absolutePath.substring(siteName.length());

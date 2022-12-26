@@ -23,8 +23,7 @@ public class SiteThread implements Runnable {
     @Override
     public void run() {
         SiteParser siteParser = new SiteParser(site, site.getUrl(), siteManager, pageIndexService);
-        ForkJoinPool.commonPool().execute(siteParser);
-        siteParser.join();
+        ForkJoinPool.commonPool().invoke(siteParser);
         if (!siteManager.isStop()) {
             site.setStatus(SiteStatus.INDEXED);
             siteService.updateSiteByUrl(site);

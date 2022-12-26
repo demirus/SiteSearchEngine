@@ -6,16 +6,17 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
-import ru.belkov.SiteSearchEngine.enums.SiteStatus;
-import ru.belkov.SiteSearchEngine.model.SiteParser;
+import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -33,7 +34,7 @@ public class PageIndexServiceImpl implements PageIndexService {
 
     private final FieldService fieldService;
 
-    private static final Logger logger = LoggerFactory.getLogger(SiteParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(PageIndexServiceImpl.class);
 
     public PageIndexServiceImpl(SiteParserConfig siteParserConfig, PageService pageService, IndexService indexService, LemmaService lemmaService, SiteService siteService, FieldService fieldService) {
         this.siteParserConfig = siteParserConfig;
@@ -45,16 +46,17 @@ public class PageIndexServiceImpl implements PageIndexService {
     }
 
     @Override
-    public boolean indexPage(String url) {
+    public boolean indexPage(String url) throws ResponseException {
         try {
-            Page page = pageService.getByUrl(url);
+            Site site = findSite(url);
+            if (site == null) {
+                throw new ResponseException("Страница находится за пределами индексируемых сайтов", HttpStatus.NOT_FOUND);
+            }
+            String relativePath = convertPathToRelative(site.getUrl(), url);
+            Page page = pageService.getByUrl(relativePath);
             if (page == null) {
-                Site site = findSite(url);
-                if (site == null) {
-                    return false;
-                }
                 page = new Page();
-                page.setPath(convertPathToRelative(site.getUrl(), url));
+                page.setPath(relativePath);
                 page.setContent("");
                 page.setCode(0);
                 page.setSite(site);
@@ -71,8 +73,15 @@ public class PageIndexServiceImpl implements PageIndexService {
                     return true;
                 }
             }
+        } catch (ResponseException e) {
+            logger.error(e.toString(), e);
+            throw new ResponseException(e.getMessage(), e.getHttpStatus());
+        } catch (UnknownHostException e) {
+            logger.error(e.toString(), e);
+            throw new ResponseException("Задан некорректный url", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error(e.toString());
+            logger.error(e.toString(), e);
+            throw new ResponseException("Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return false;
     }
@@ -91,10 +100,11 @@ public class PageIndexServiceImpl implements PageIndexService {
                 return addPageToIndex(page);
             }
         } catch (Exception e) {
-            logger.error(e.toString());
+            logger.error(e.toString(), e);
         }
         return null;
     }
+
     private Document addPageToIndex(Page page) throws IOException {
         String url = page.getSite().getUrl() + page.getPath();
         Connection.Response response = createResponse(url);
@@ -116,7 +126,7 @@ public class PageIndexServiceImpl implements PageIndexService {
     private String convertPathToRelative(String siteName, String absolutePath) {
         if (!absolutePath.startsWith(siteName)) {
             return null;
-        } else if (absolutePath.equals(siteName)){
+        } else if (absolutePath.equals(siteName)) {
             return "/";
         } else {
             return absolutePath.substring(siteName.length());
@@ -164,7 +174,7 @@ public class PageIndexServiceImpl implements PageIndexService {
         return field.getWeight() * count;
     }
 
-    private void clearPageData(Page page) {
+    private synchronized void clearPageData(Page page) {
         List<Index> indices = indexService.getIndexByPage(page);
         for (Index index : indices) {
             Lemma lemma = index.getLemma();

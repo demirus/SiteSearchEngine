@@ -3,8 +3,9 @@ package ru.belkov.SiteSearchEngine.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ru.belkov.SiteSearchEngine.enums.SiteStatus;
+import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
 import ru.belkov.SiteSearchEngine.model.SiteManager;
 import ru.belkov.SiteSearchEngine.model.SiteManagerImpl;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
@@ -39,6 +40,7 @@ public class SiteParserServiceImpl implements SiteParserService {
         }
 
         siteManager.startParsing();
+        siteManagers.add(siteManager);
     }
 
     @EventListener(ContextRefreshedEvent.class)
@@ -91,15 +93,33 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public void deleteSite(String url) {
+    public void deleteSite(String url) throws ResponseException {
         SiteManager siteManager = getSiteManager(url);
         if (siteManager != null) {
-            siteService.deleteSiteByUrl(siteManager.getSite());
+            siteManager.deleteSite();
+        } else {
+            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.BAD_REQUEST);
         }
     }
 
     private SiteManager getSiteManager(String url) {
         Optional<SiteManager> optionalSiteManager = siteManagers.stream().filter(sm -> sm.getSite() != null && sm.getSite().getUrl().equals(url)).findFirst();
         return optionalSiteManager.orElse(null);
+    }
+
+    @Override
+    public void startParsing(String url) {
+        SiteManager siteManager = getSiteManager(url);
+        if (siteManager != null) {
+            siteManager.startParsing();
+        }
+    }
+
+    @Override
+    public void stopParsing(String url) {
+        SiteManager siteManager = getSiteManager(url);
+        if (siteManager != null) {
+            siteManager.stopParsing();
+        }
     }
 }

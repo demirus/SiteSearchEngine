@@ -9,9 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
-import ru.belkov.SiteSearchEngine.enums.SiteStatus;
 import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
-import ru.belkov.SiteSearchEngine.model.SiteParser;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
@@ -176,7 +174,7 @@ public class PageIndexServiceImpl implements PageIndexService {
         return field.getWeight() * count;
     }
 
-    private void clearPageData(Page page) {
+    private synchronized void clearPageData(Page page) {
         List<Index> indices = indexService.getIndexByPage(page);
         for (Index index : indices) {
             Lemma lemma = index.getLemma();

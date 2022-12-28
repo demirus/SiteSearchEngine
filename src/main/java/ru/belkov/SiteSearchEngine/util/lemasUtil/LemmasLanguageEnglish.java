@@ -14,6 +14,6 @@ public class LemmasLanguageEnglish extends LemmasLanguage {
     }};
 
     public LemmasLanguageEnglish() throws IOException {
-        super("[^A-Za-zÀ-ÿ]", new SearchEngineMorphologyEnglish(), excludedPartsOfSpeech);
+        super("[^A-Za-z]", new SearchEngineMorphologyEnglish(), excludedPartsOfSpeech);
     }
 }

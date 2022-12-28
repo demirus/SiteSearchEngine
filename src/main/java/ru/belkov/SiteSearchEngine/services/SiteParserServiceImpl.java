@@ -29,7 +29,7 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public void parseSite(String name, String url) {
+    public synchronized void parseSite(String name, String url) {
         SiteManager siteManager = getSiteManager(url);
 
         if (siteManager == null) {
@@ -98,7 +98,7 @@ public class SiteParserServiceImpl implements SiteParserService {
         if (siteManager != null) {
             siteManager.deleteSite();
         } else {
-            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.BAD_REQUEST);
+            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -108,10 +108,16 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public void startParsing(String url) {
+    public void startParsing(String url) throws ResponseException {
         SiteManager siteManager = getSiteManager(url);
         if (siteManager != null) {
-            siteManager.startParsing();
+            if (!siteManager.isStop()) {
+                throw new ResponseException("Индексация сайта уже запущена", HttpStatus.BAD_REQUEST);
+            } else {
+                siteManager.startParsing();
+            }
+        } else {
+            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
         }
     }
 

@@ -81,4 +81,16 @@ public class SiteManagerImpl implements SiteManager {
             site = null;
         }
     }
+
+    @Override
+    public synchronized void stopParsing(String error) {
+        if (!stop) {
+            stop = true;
+            if (site != null) {
+                site.setStatus(SiteStatus.FAILED);
+                site.setLastError(error);
+                siteService.updateSiteByUrl(site);
+            }
+        }
+    }
 }

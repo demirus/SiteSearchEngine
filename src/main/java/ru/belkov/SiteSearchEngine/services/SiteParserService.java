@@ -15,7 +15,7 @@ public interface SiteParserService {
 
     void deleteSite(String url) throws ResponseException;
 
-    void startParsing(String url);
+    void startParsing(String url) throws ResponseException;
 
     void stopParsing(String url);
 }

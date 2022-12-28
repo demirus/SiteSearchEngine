@@ -41,7 +41,8 @@ public class SiteParser extends RecursiveAction {
                 }
             }
         } catch (Exception e) {
-            logger.error(e.toString());
+            logger.error(e.toString(), e);
+            manager.stopParsing(e.getMessage());
         }
     }
 

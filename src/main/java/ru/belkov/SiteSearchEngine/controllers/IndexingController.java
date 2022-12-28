@@ -67,10 +67,22 @@ public class IndexingController {
     }
 
     @GetMapping("/startSiteIndexing")
-    public Map<String, Object> startSiteIndexing(@RequestParam String url) {
-        Map<String, Object> answer = new HashMap<>();
-        siteParserService.startParsing(url);
-        return answer;
+    public ResponseEntity<Map<String, String>> startSiteIndexing(@RequestParam String url) {
+        try {
+            siteParserService.startParsing(url);
+            Map<String, String> answer = formSuccessAnswer();
+            return new ResponseEntity<>(answer, HttpStatus.OK);
+        } catch (ResponseException e) {
+            logger.error(e.getMessage(), e);
+            Map<String, String> answer = formFailureAnswer();
+            answer.put("error", e.getMessage());
+            return new ResponseEntity<>(answer, e.getHttpStatus());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            Map<String, String> answer = formFailureAnswer();
+            answer.put("error", "Непредвиденная ошибка сервера");
+            return new ResponseEntity<>(answer, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/indexPage")

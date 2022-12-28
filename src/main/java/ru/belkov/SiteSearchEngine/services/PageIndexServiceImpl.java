@@ -87,20 +87,16 @@ public class PageIndexServiceImpl implements PageIndexService {
     }
 
     @Override
-    public Document indexPage(String url, Site site) {
-        try {
-            Page page = new Page();
-            page.setPath(convertPathToRelative(site.getUrl(), url));
-            page.setContent("");
-            page.setCode(0);
-            page.setSite(site);
-            if (pageService.addIfNotExists(page)) {
-                site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-                siteService.updateSiteByUrl(site);
-                return addPageToIndex(page);
-            }
-        } catch (Exception e) {
-            logger.error(e.toString(), e);
+    public Document indexPage(String url, Site site) throws IOException {
+        Page page = new Page();
+        page.setPath(convertPathToRelative(site.getUrl(), url));
+        page.setContent("");
+        page.setCode(0);
+        page.setSite(site);
+        if (pageService.addIfNotExists(page)) {
+            site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+            siteService.updateSiteByUrl(site);
+            return addPageToIndex(page);
         }
         return null;
     }

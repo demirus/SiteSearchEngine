@@ -8,4 +8,5 @@ public interface SiteManager {
     void stopParsing();
     boolean isStop();
     void deleteSite();
+    void stopParsing(String error);
 }

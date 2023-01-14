@@ -23,7 +23,6 @@ public class SiteManagerImpl implements SiteManager {
     @Override
     public synchronized void startParsing() {
         if (stop) {
-            stop = false;
             if (site != null) {
                 try {
                     if (thread != null && thread.isAlive()) {
@@ -37,8 +36,8 @@ public class SiteManagerImpl implements SiteManager {
                 site.setLastError("");
                 site.setStatus(SiteStatus.INDEXING);
                 site = siteService.addIfNotExists(site);
-                SiteThread siteThread = new SiteThread(site, this, pageIndexService, siteService);
-                thread = new Thread(siteThread);
+                SiteIndexingWorker siteIndexingWorker = new SiteIndexingWorker(site, this, pageIndexService, siteService);
+                thread = new Thread(siteIndexingWorker);
                 thread.start();
             }
         }

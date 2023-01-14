@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
 import ru.belkov.SiteSearchEngine.model.SiteManager;
 import ru.belkov.SiteSearchEngine.model.SiteManagerImpl;
+import ru.belkov.SiteSearchEngine.model.StartParsingWorker;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,22 +70,12 @@ public class SiteParserServiceImpl implements SiteParserService {
 
     @Override
     public boolean startParsing() {
-        if (isIndexing()) {
-            return true;
-        }
-        siteManagers.forEach(s -> {
-            if (s.isStop()) {
-                s.startParsing();
-            }
-        });
-        return false;
+        startParsing(siteManagers);
+        return true;
     }
 
     @Override
     public boolean stopIndexing() {
-        if (!isIndexing()) {
-            return false;
-        }
         siteManagers.forEach(s -> {
             if (!s.isStop()) {
                 s.stopParsing();
@@ -114,7 +106,7 @@ public class SiteParserServiceImpl implements SiteParserService {
             if (!siteManager.isStop()) {
                 throw new ResponseException("Индексация сайта уже запущена", HttpStatus.BAD_REQUEST);
             } else {
-                siteManager.startParsing();
+                startParsing(Collections.singletonList(siteManager));
             }
         } else {
             throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
@@ -122,10 +114,26 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public void stopParsing(String url) {
+    public void stopParsing(String url) throws ResponseException {
         SiteManager siteManager = getSiteManager(url);
         if (siteManager != null) {
-            siteManager.stopParsing();
+            if (siteManager.isStop()) {
+                throw new ResponseException("Индексация сайта уже остановлена", HttpStatus.BAD_REQUEST);
+            } else {
+                siteManager.stopParsing();
+            }
+        } else {
+            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    private void startParsing(List<SiteManager> siteManagers) {
+        for (SiteManager siteManager : siteManagers) {
+            if (siteManager.isStop()) {
+                StartParsingWorker worker = new StartParsingWorker(siteManager);
+                Thread thread = new Thread(worker);
+                thread.start();
+            }
         }
     }
 }

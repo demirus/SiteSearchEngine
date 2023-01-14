@@ -60,10 +60,22 @@ public class IndexingController {
     }
 
     @GetMapping("/stopSiteIndexing")
-    public Map<String, Object> stopSiteIndexing(@RequestParam String url) {
-        Map<String, Object> answer = new HashMap<>();
-        siteParserService.stopParsing(url);
-        return answer;
+    public ResponseEntity<Map<String, String>> stopSiteIndexing(@RequestParam String url) {
+        try {
+            siteParserService.stopParsing(url);
+            Map<String, String> answer = formSuccessAnswer();
+            return new ResponseEntity<>(answer, HttpStatus.OK);
+        } catch (ResponseException e) {
+            logger.error(e.getMessage(), e);
+            Map<String, String> answer = formFailureAnswer();
+            answer.put("error", e.getMessage());
+            return new ResponseEntity<>(answer, e.getHttpStatus());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            Map<String, String> answer = formFailureAnswer();
+            answer.put("error", "Непредвиденная ошибка сервера");
+            return new ResponseEntity<>(answer, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/startSiteIndexing")
@@ -110,8 +122,7 @@ public class IndexingController {
             siteParserService.parseSite(name, url);
             Map<String, String> answer = formSuccessAnswer();
             return new ResponseEntity<>(answer, HttpStatus.OK);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
             Map<String, String> answer = formFailureAnswer();
             answer.put("error", "Непредвиденная ошибка сервера");
@@ -130,8 +141,7 @@ public class IndexingController {
             Map<String, String> answer = formFailureAnswer();
             answer.put("error", e.getMessage());
             return new ResponseEntity<>(answer, e.getHttpStatus());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
             Map<String, String> answer = formFailureAnswer();
             answer.put("error", "Непредвиденная ошибка сервера");

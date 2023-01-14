@@ -17,5 +17,5 @@ public interface SiteParserService {
 
     void startParsing(String url) throws ResponseException;
 
-    void stopParsing(String url);
+    void stopParsing(String url) throws ResponseException;
 }

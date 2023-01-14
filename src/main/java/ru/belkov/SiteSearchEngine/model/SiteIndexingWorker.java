@@ -6,14 +6,14 @@ import ru.belkov.SiteSearchEngine.services.*;
 
 import java.util.concurrent.ForkJoinPool;
 
-public class SiteThread implements Runnable {
+public class SiteIndexingWorker implements Runnable {
     private Site site;
     private PageIndexService pageIndexService;
     private SiteManager siteManager;
 
     private SiteService siteService;
 
-    public SiteThread(Site site, SiteManager siteManager, PageIndexService pageIndexService, SiteService siteService) {
+    public SiteIndexingWorker(Site site, SiteManager siteManager, PageIndexService pageIndexService, SiteService siteService) {
         this.site = site;
         this.pageIndexService = pageIndexService;
         this.siteManager = siteManager;

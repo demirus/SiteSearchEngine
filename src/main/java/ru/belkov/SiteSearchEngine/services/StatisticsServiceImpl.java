@@ -33,7 +33,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private TotalStatistics getTotalStatistics() {
         TotalStatistics totalStatistics = new TotalStatistics();
-        totalStatistics.setIsIndexing(siteParserService.isIndexing());
+        totalStatistics.setIsIndexing(siteParserService.isFullIndexing());
         totalStatistics.setLemmas(lemmaService.count());
         totalStatistics.setPages(pageService.count());
         totalStatistics.setSites(siteService.count());

@@ -19,7 +19,7 @@ public class SearchController {
         this.siteService = siteService;
     }
 
-    @GetMapping("/search")
+    @GetMapping("api/search")
     public ResponseEntity<SearchResponse> search(@RequestParam String query, @RequestParam String offset, @RequestParam String limit, @RequestParam(required = false) String site) {
         SearchResponse searchResponse;
         if (site == null) {

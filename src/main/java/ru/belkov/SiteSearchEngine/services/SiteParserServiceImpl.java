@@ -64,7 +64,7 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public boolean isIndexing() {
+    public boolean isFullIndexing() {
         return siteManagers.stream().noneMatch(SiteManager::isStop);
     }
 
@@ -75,12 +75,21 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
+    public boolean isFullNotIndexing() {
+        return siteManagers.stream().allMatch(SiteManager::isStop);
+    }
+
+    @Override
     public boolean stopIndexing() {
-        siteManagers.forEach(s -> {
-            if (!s.isStop()) {
-                s.stopParsing();
-            }
-        });
+        if (!isFullNotIndexing()) {
+            siteManagers.forEach(s -> {
+                if (!s.isStop()) {
+                    s.stopParsing();
+                }
+            });
+        } else {
+            return false;
+        }
         return true;
     }
 

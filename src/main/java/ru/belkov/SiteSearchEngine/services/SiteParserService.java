@@ -7,7 +7,9 @@ public interface SiteParserService {
 
     void loadSiteManagers();
 
-    boolean isIndexing();
+    boolean isFullIndexing();
+
+    boolean isFullNotIndexing();
 
     boolean startParsing();
 

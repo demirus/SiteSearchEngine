@@ -16,7 +16,7 @@ public class StatisticsController {
         this.statisticsService = statisticsService;
     }
 
-    @GetMapping("/statistics")
+    @GetMapping("api/statistics")
     public Map<String, Object> statistics() {
         Map<String, Object> result = new HashMap<>();
         result.put("result", "true");

@@ -26,10 +26,10 @@ public class IndexingController {
         this.pageIndexService = pageIndexService;
     }
 
-    @GetMapping("/startIndexing")
+    @GetMapping("api/startIndexing")
     public ResponseEntity<Map<String, String>> startIndexing() {
         ResponseEntity<Map<String, String>> response;
-        if (siteParserService.isIndexing()) {
+        if (siteParserService.isFullIndexing()) {
             Map<String, String> map = new HashMap<>();
             map.put("result", "false");
             map.put("error", "Индексация уже запущена");
@@ -43,7 +43,7 @@ public class IndexingController {
         return response;
     }
 
-    @GetMapping("/stopIndexing")
+    @GetMapping("api/stopIndexing")
     public ResponseEntity<Map<String, String>> stopIndexing() {
         ResponseEntity<Map<String, String>> response;
         if (!siteParserService.stopIndexing()) {
@@ -59,7 +59,7 @@ public class IndexingController {
         return response;
     }
 
-    @GetMapping("/stopSiteIndexing")
+    @GetMapping("api/stopSiteIndexing")
     public ResponseEntity<Map<String, String>> stopSiteIndexing(@RequestParam String url) {
         try {
             siteParserService.stopParsing(url);
@@ -78,7 +78,7 @@ public class IndexingController {
         }
     }
 
-    @GetMapping("/startSiteIndexing")
+    @GetMapping("api/startSiteIndexing")
     public ResponseEntity<Map<String, String>> startSiteIndexing(@RequestParam String url) {
         try {
             siteParserService.startParsing(url);
@@ -97,7 +97,7 @@ public class IndexingController {
         }
     }
 
-    @PostMapping("/indexPage")
+    @PostMapping("api/indexPage")
     public ResponseEntity<Map<String, String>> indexPage(@RequestParam String url) {
         try {
             pageIndexService.indexPage(url);
@@ -116,7 +116,7 @@ public class IndexingController {
         }
     }
 
-    @PostMapping("/indexSite")
+    @PostMapping("api/indexSite")
     public ResponseEntity<Map<String, String>> indexSite(@RequestParam String name, @RequestParam String url) {
         try {
             siteParserService.parseSite(name, url);
@@ -130,7 +130,7 @@ public class IndexingController {
         }
     }
 
-    @DeleteMapping("/deleteSite")
+    @DeleteMapping("api/deleteSite")
     public ResponseEntity<Map<String, String>> deleteSite(@RequestParam String url) {
         try {
             siteParserService.deleteSite(url);

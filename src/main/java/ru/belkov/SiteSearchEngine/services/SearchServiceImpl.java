@@ -48,7 +48,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public SearchResponse search(String searchRequest, Site site) {
+    public SearchResponse search(String searchRequest, Site site, Integer offset, Integer limit) {
         if (searchRequest.isEmpty()) {
             return new SearchResponseError(false, "Задан пустой поисковый запрос", HttpStatus.OK);
         }
@@ -60,7 +60,9 @@ public class SearchServiceImpl implements SearchService {
             } else {
                 return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
             }
-            return getSearchResponse(siteLemmasMap, searchRequest);
+            SearchResponseSuccess searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
+            limitResponse(searchResponse, offset, limit);
+            return searchResponse;
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
@@ -68,7 +70,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public SearchResponse search(String searchRequest) {
+    public SearchResponse search(String searchRequest, Integer offset, Integer limit) {
         if (searchRequest.isEmpty()) {
             return new SearchResponseError(false, "Задан пустой поисковый запрос", HttpStatus.OK);
         }
@@ -84,14 +86,35 @@ public class SearchServiceImpl implements SearchService {
             if (siteLemmasMap.isEmpty()) {
                 return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
             }
-            return getSearchResponse(siteLemmasMap, searchRequest);
+            SearchResponseSuccess searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
+            limitResponse(searchResponse, offset, limit);
+            return searchResponse;
         } catch (IOException | EntityNotFoundException e) {
             logger.error(e.toString());
         }
         return new SearchResponseError(false, "Внутренняя ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private SearchResponse getSearchResponse(Map<Site, List<Lemma>> siteLemmasMap, String query) throws EntityNotFoundException, IOException {
+    private void limitResponse(SearchResponseSuccess searchResponse, Integer offset, Integer limit) {
+        List<SearchDataObject> data = searchResponse.getData();
+        if (offset == null) {
+            offset = 0;
+        }
+        if (limit == null) {
+            limit = 20;
+        }
+        if (limit > data.size()) {
+            limit = data.size();
+        }
+        if (data.size() >= offset) {
+            data = data.subList(offset, data.size());
+            data = data.subList(0, limit);
+        }
+        searchResponse.setData(data);
+        searchResponse.setCount(data.size());
+    }
+
+    private SearchResponseSuccess getSearchResponse(Map<Site, List<Lemma>> siteLemmasMap, String query) throws EntityNotFoundException, IOException {
         SearchResponseSuccess searchResponse = new SearchResponseSuccess(true, HttpStatus.OK);
         deleteAllLemmasWithTooHighFrequency(siteLemmasMap);
         List<SearchDataObject> searchDataObjects = new ArrayList<>();

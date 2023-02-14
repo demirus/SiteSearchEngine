@@ -9,11 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SearchServiceConfig;
-import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
+import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.dto.search.SearchDataObject;
 import ru.belkov.SiteSearchEngine.dto.search.SearchResponse;
-import ru.belkov.SiteSearchEngine.dto.search.SearchResponseError;
-import ru.belkov.SiteSearchEngine.dto.search.SearchResponseSuccess;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
@@ -33,24 +31,25 @@ public class SearchServiceImpl implements SearchService {
 
     private final IndexService indexService;
 
-    private final FieldService fieldService;
-
     private final SearchServiceConfig searchConfig;
 
     private final SiteService siteService;
 
-    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SiteParserConfig parserConfig, FieldService fieldService, SearchServiceConfig searchConfig, SiteService siteService) {
+    public SearchServiceImpl(LemmaService lemmaService, IndexService indexService, SearchServiceConfig searchConfig, SiteService siteService) {
         this.lemmaService = lemmaService;
         this.indexService = indexService;
-        this.fieldService = fieldService;
         this.searchConfig = searchConfig;
         this.siteService = siteService;
     }
 
     @Override
-    public SearchResponse search(String searchRequest, Site site, Integer offset, Integer limit) {
+    public Response search(String searchRequest, String siteUrl, Integer offset, Integer limit) {
         if (searchRequest.isEmpty()) {
-            return new SearchResponseError(false, "Задан пустой поисковый запрос", HttpStatus.OK);
+            return new Response(Boolean.FALSE, "Задан пустой поисковый запрос", HttpStatus.BAD_REQUEST);
+        }
+        Site site = siteService.getByUrl(siteUrl);
+        if (site == null) {
+            return new Response(Boolean.FALSE, "Заданый сайт отсутствует в системе", HttpStatus.NOT_FOUND);
         }
         try {
             Map<Site, List<Lemma>> siteLemmasMap = new HashMap<>();
@@ -58,21 +57,21 @@ public class SearchServiceImpl implements SearchService {
             if (!lemmas.isEmpty()) {
                 siteLemmasMap.put(site, lemmas);
             } else {
-                return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
+                return new Response(Boolean.FALSE, "Указанная страница не найдена", HttpStatus.NOT_FOUND);
             }
-            SearchResponseSuccess searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
+            SearchResponse searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
             limitResponse(searchResponse, offset, limit);
             return searchResponse;
-        } catch (IOException | EntityNotFoundException e) {
-            logger.error(e.toString());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new SearchResponseError(false, "Внутренняя ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
-    public SearchResponse search(String searchRequest, Integer offset, Integer limit) {
+    public Response search(String searchRequest, Integer offset, Integer limit) {
         if (searchRequest.isEmpty()) {
-            return new SearchResponseError(false, "Задан пустой поисковый запрос", HttpStatus.OK);
+            return new Response(Boolean.FALSE, "Задан пустой поисковый запрос", HttpStatus.BAD_REQUEST);
         }
         try {
             List<Site> sites = siteService.getAll();
@@ -84,18 +83,18 @@ public class SearchServiceImpl implements SearchService {
                 }
             }
             if (siteLemmasMap.isEmpty()) {
-                return new SearchResponseError(false, "Указанная страница не найдена", HttpStatus.OK);
+                return new Response(Boolean.FALSE, "Указанная страница не найдена", HttpStatus.NOT_FOUND);
             }
-            SearchResponseSuccess searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
+            SearchResponse searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
             limitResponse(searchResponse, offset, limit);
             return searchResponse;
         } catch (IOException | EntityNotFoundException e) {
-            logger.error(e.toString());
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new SearchResponseError(false, "Внутренняя ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private void limitResponse(SearchResponseSuccess searchResponse, Integer offset, Integer limit) {
+    private void limitResponse(SearchResponse searchResponse, Integer offset, Integer limit) {
         List<SearchDataObject> data = searchResponse.getData();
         if (offset == null) {
             offset = 0;
@@ -114,8 +113,8 @@ public class SearchServiceImpl implements SearchService {
         searchResponse.setCount(data.size());
     }
 
-    private SearchResponseSuccess getSearchResponse(Map<Site, List<Lemma>> siteLemmasMap, String query) throws EntityNotFoundException, IOException {
-        SearchResponseSuccess searchResponse = new SearchResponseSuccess(true, HttpStatus.OK);
+    private SearchResponse getSearchResponse(Map<Site, List<Lemma>> siteLemmasMap, String query) throws EntityNotFoundException, IOException {
+        SearchResponse searchResponse = new SearchResponse(true, HttpStatus.OK);
         deleteAllLemmasWithTooHighFrequency(siteLemmasMap);
         List<SearchDataObject> searchDataObjects = new ArrayList<>();
         searchResponse.setData(searchDataObjects);
@@ -228,5 +227,4 @@ public class SearchServiceImpl implements SearchService {
         Optional<String> fragment = elements.stream().map(Element::text).sorted(byLength.reversed()).findFirst();
         return fragment.orElse(null);
     }
-
 }

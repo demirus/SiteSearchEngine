@@ -1,30 +1,37 @@
 package ru.belkov.SiteSearchEngine.dto.search;
 
 import org.springframework.http.HttpStatus;
+import ru.belkov.SiteSearchEngine.dto.Response;
 
-public abstract class SearchResponse {
-   private boolean result;
+import java.util.List;
 
-   private HttpStatus httpStatus;
+public class SearchResponse extends Response {
+    private int count;
+    private List<SearchDataObject> data;
 
-    public SearchResponse(boolean result, HttpStatus httpStatus) {
-        this.result = result;
-        this.httpStatus = httpStatus;
+    public SearchResponse(Boolean result, String error, HttpStatus httpStatus, int count, List<SearchDataObject> data) {
+        super(result, error, httpStatus);
+        this.count = count;
+        this.data = data;
     }
 
-    public boolean isResult() {
-        return result;
+    public SearchResponse(Boolean result, HttpStatus httpStatus) {
+        super(result, null, httpStatus);
     }
 
-    public void setResult(boolean result) {
-        this.result = result;
+    public int getCount() {
+        return count;
     }
 
-    public HttpStatus getHttpStatus() {
-        return httpStatus;
+    public void setCount(int count) {
+        this.count = count;
     }
 
-    public void setHttpStatus(HttpStatus httpStatus) {
-        this.httpStatus = httpStatus;
+    public List<SearchDataObject> getData() {
+        return data;
+    }
+
+    public void setData(List<SearchDataObject> data) {
+        this.data = data;
     }
 }

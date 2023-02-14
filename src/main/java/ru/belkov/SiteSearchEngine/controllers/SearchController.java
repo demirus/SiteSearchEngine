@@ -4,37 +4,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ru.belkov.SiteSearchEngine.dto.search.SearchDataObject;
-import ru.belkov.SiteSearchEngine.dto.search.SearchResponse;
-import ru.belkov.SiteSearchEngine.dto.search.SearchResponseSuccess;
-import ru.belkov.SiteSearchEngine.model.entity.Site;
+import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.services.SearchService;
-import ru.belkov.SiteSearchEngine.services.SiteService;
 
 @RestController
 public class SearchController {
     private SearchService searchService;
-    private SiteService siteService;
 
-    public SearchController(SearchService searchService, SiteService siteService) {
+    public SearchController(SearchService searchService) {
         this.searchService = searchService;
-        this.siteService = siteService;
     }
 
     @GetMapping("api/search")
-    public ResponseEntity<SearchResponse> search(@RequestParam String query, @RequestParam(required = false) Integer offset, @RequestParam(required = false) Integer limit, @RequestParam(required = false) String site) {
-        SearchResponse searchResponse;
+    public ResponseEntity<Response> search(@RequestParam String query, @RequestParam(required = false) Integer offset, @RequestParam(required = false) Integer limit, @RequestParam(required = false) String site) {
+        Response response;
         if (site == null) {
-            searchResponse = searchService.search(query, offset, limit);
-            return new ResponseEntity<>(searchResponse, searchResponse.getHttpStatus());
+            response = searchService.search(query, offset, limit);
         } else {
-            Site searchedSite = siteService.getByUrl(site);
-            if (searchedSite != null) {
-                searchResponse = searchService.search(query, searchedSite, offset, limit);
-                return new ResponseEntity<>(searchResponse, searchResponse.getHttpStatus());
-            } else {
-                return null;
-            }
+            response = searchService.search(query, site, offset, limit);
         }
+        return new ResponseEntity<>(response, response.getHttpStatus());
     }
 }

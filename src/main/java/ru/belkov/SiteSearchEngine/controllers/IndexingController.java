@@ -18,7 +18,7 @@ import java.util.Map;
 public class IndexingController {
     private SiteParserService siteParserService;
     private PageIndexService pageIndexService;
-    private static final Logger logger = LoggerFactory.getLogger(SiteManagerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(IndexingController.class);
 
 
     public IndexingController(SiteParserServiceImpl siteParserService, PageIndexService pageIndexService) {

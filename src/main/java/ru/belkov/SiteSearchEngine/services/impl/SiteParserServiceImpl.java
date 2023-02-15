@@ -1,4 +1,4 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -10,6 +10,9 @@ import ru.belkov.SiteSearchEngine.model.SiteManager;
 import ru.belkov.SiteSearchEngine.model.SiteManagerImpl;
 import ru.belkov.SiteSearchEngine.model.StartParsingWorker;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
+import ru.belkov.SiteSearchEngine.services.PageIndexService;
+import ru.belkov.SiteSearchEngine.services.SiteParserService;
+import ru.belkov.SiteSearchEngine.services.SiteService;
 
 import java.util.ArrayList;
 import java.util.Collections;

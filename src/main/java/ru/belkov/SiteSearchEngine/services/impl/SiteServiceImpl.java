@@ -1,13 +1,14 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.repository.SiteRepository;
+import ru.belkov.SiteSearchEngine.services.SiteService;
 
 import java.util.List;
 
 @Service
-public class SiteServiceImpl implements SiteService{
+public class SiteServiceImpl implements SiteService {
     private SiteRepository siteRepository;
 
     public SiteServiceImpl(SiteRepository siteRepository) {

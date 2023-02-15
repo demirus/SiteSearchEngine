@@ -4,8 +4,10 @@ import java.util.List;
 
 public class Statistics {
     private TotalStatistics total;
-
     private List<SiteInformation> detailed;
+
+    public Statistics() {
+    }
 
     public TotalStatistics getTotal() {
         return total;

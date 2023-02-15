@@ -1,7 +1,7 @@
 package ru.belkov.SiteSearchEngine.services;
 
-import ru.belkov.SiteSearchEngine.dto.statistics.Statistics;
+import ru.belkov.SiteSearchEngine.dto.Response;
 
 public interface StatisticsService {
-    Statistics getStatistics();
+    Response getStatistics();
 }

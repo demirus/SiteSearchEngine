@@ -1,10 +1,11 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.model.entity.Index;
 import ru.belkov.SiteSearchEngine.model.entity.Lemma;
 import ru.belkov.SiteSearchEngine.model.entity.Page;
 import ru.belkov.SiteSearchEngine.repository.IndexRepository;
+import ru.belkov.SiteSearchEngine.services.IndexService;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -13,6 +13,10 @@ import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.dto.search.SearchDataObject;
 import ru.belkov.SiteSearchEngine.dto.search.SearchResponse;
 import ru.belkov.SiteSearchEngine.model.entity.*;
+import ru.belkov.SiteSearchEngine.services.IndexService;
+import ru.belkov.SiteSearchEngine.services.LemmaService;
+import ru.belkov.SiteSearchEngine.services.SearchService;
+import ru.belkov.SiteSearchEngine.services.SiteService;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;

@@ -6,10 +6,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
-import ru.belkov.SiteSearchEngine.model.SiteManagerImpl;
 import ru.belkov.SiteSearchEngine.services.PageIndexService;
 import ru.belkov.SiteSearchEngine.services.SiteParserService;
-import ru.belkov.SiteSearchEngine.services.SiteParserServiceImpl;
+import ru.belkov.SiteSearchEngine.services.impl.SiteParserServiceImpl;
 
 import java.util.HashMap;
 import java.util.Map;

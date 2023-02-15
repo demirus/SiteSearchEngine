@@ -1,8 +1,9 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.model.entity.Field;
 import ru.belkov.SiteSearchEngine.repository.FieldRepository;
+import ru.belkov.SiteSearchEngine.services.FieldService;
 
 import java.util.List;
 

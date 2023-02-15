@@ -1,11 +1,10 @@
 package ru.belkov.SiteSearchEngine.controllers;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.services.StatisticsService;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 public class StatisticsController {
@@ -17,10 +16,8 @@ public class StatisticsController {
     }
 
     @GetMapping("api/statistics")
-    public Map<String, Object> statistics() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("result", "true");
-        result.put("statistics", statisticsService.getStatistics());
-        return result;
+    public ResponseEntity<Response> statistics() {
+        Response response = statisticsService.getStatistics();
+        return new ResponseEntity<>(response, response.getHttpStatus());
     }
 }

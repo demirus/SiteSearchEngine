@@ -1,4 +1,4 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
 import ru.belkov.SiteSearchEngine.model.entity.*;
+import ru.belkov.SiteSearchEngine.services.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;

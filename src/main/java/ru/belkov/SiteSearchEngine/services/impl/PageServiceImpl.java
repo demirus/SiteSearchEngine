@@ -1,8 +1,9 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.model.entity.Page;
 import ru.belkov.SiteSearchEngine.repository.PageRepository;
+import ru.belkov.SiteSearchEngine.services.PageService;
 
 @Service
 public class PageServiceImpl implements PageService {

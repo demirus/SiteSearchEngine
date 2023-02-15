@@ -1,12 +1,19 @@
 package ru.belkov.SiteSearchEngine.dto.statistics;
 
-public abstract class SiteInformation {
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class SiteInformation {
     private String url;
     private String name;
     private String status;
     private String statusTime;
     private String pages;
     private String lemmas;
+    private String error;
+
+    public SiteInformation() {
+    }
 
     public String getUrl() {
         return url;
@@ -54,5 +61,13 @@ public abstract class SiteInformation {
 
     public void setLemmas(String lemmas) {
         this.lemmas = lemmas;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
     }
 }

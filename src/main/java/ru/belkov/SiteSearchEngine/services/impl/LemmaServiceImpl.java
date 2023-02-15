@@ -1,9 +1,10 @@
-package ru.belkov.SiteSearchEngine.services;
+package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.model.entity.Lemma;
 import ru.belkov.SiteSearchEngine.model.entity.Site;
 import ru.belkov.SiteSearchEngine.repository.LemmaRepository;
+import ru.belkov.SiteSearchEngine.services.LemmaService;
 
 import java.util.List;
 

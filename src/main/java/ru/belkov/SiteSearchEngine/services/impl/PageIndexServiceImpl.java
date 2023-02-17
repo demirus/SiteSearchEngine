@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
-import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
+import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.services.*;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageEnglish;
@@ -17,7 +17,6 @@ import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasLanguageRussian;
 import ru.belkov.SiteSearchEngine.util.lemasUtil.LemmasUtil;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -47,11 +46,11 @@ public class PageIndexServiceImpl implements PageIndexService {
     }
 
     @Override
-    public boolean indexPage(String url) throws ResponseException {
+    public Response indexPage(String url) {
         try {
             Site site = findSite(url);
             if (site == null) {
-                throw new ResponseException("Страница находится за пределами индексируемых сайтов", HttpStatus.NOT_FOUND);
+                return new Response(Boolean.FALSE, "Страница находится за пределами индексируемых сайтов", HttpStatus.NOT_FOUND);
             }
             String relativePath = convertPathToRelative(site.getUrl(), url);
             Page page = pageService.getByUrl(relativePath);
@@ -65,26 +64,20 @@ public class PageIndexServiceImpl implements PageIndexService {
                     site.setStatusTime(new Timestamp(System.currentTimeMillis()));
                     siteService.updateSiteByUrl(site);
                     if (addPageToIndex(page) != null) {
-                        return true;
+                        return new Response(Boolean.TRUE, null, HttpStatus.OK);
                     }
                 }
             } else {
                 clearPageData(page);
                 if (addPageToIndex(page) != null) {
-                    return true;
+                    return new Response(Boolean.TRUE, null, HttpStatus.OK);
                 }
             }
-        } catch (ResponseException e) {
-            logger.error(e.toString(), e);
-            throw new ResponseException(e.getMessage(), e.getHttpStatus());
-        } catch (UnknownHostException e) {
-            logger.error(e.toString(), e);
-            throw new ResponseException("Задан некорректный url", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error(e.toString(), e);
-            throw new ResponseException("Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return false;
+        return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override

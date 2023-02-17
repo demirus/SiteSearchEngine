@@ -1,11 +1,13 @@
 package ru.belkov.SiteSearchEngine.services.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
+import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.model.SiteManager;
 import ru.belkov.SiteSearchEngine.model.SiteManagerImpl;
 import ru.belkov.SiteSearchEngine.model.StartParsingWorker;
@@ -22,10 +24,9 @@ import java.util.Optional;
 @Service
 public class SiteParserServiceImpl implements SiteParserService {
     private final SiteService siteService;
-
     private final PageIndexService pageIndexService;
-
     private List<SiteManager> siteManagers = new ArrayList<>();
+    private final Logger logger = LoggerFactory.getLogger(SiteParserServiceImpl.class);
 
     @Autowired
     public SiteParserServiceImpl(SiteService siteService, PageIndexService pageIndexService) {
@@ -34,18 +35,24 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public synchronized void parseSite(String name, String url) {
-        SiteManager siteManager = getSiteManager(url);
+    public synchronized Response parseSite(String name, String url) {
+        try {
+            SiteManager siteManager = getSiteManager(url);
 
-        if (siteManager == null) {
-            Site site = new Site();
-            site.setName(name);
-            site.setUrl(url);
-            siteManager = new SiteManagerImpl(site, siteService, pageIndexService);
+            if (siteManager == null) {
+                Site site = new Site();
+                site.setName(name);
+                site.setUrl(url);
+                siteManager = new SiteManagerImpl(site, siteService, pageIndexService);
+            }
+
+            siteManager.startParsing();
+            siteManagers.add(siteManager);
+            return new Response(Boolean.TRUE, null, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        siteManager.startParsing();
-        siteManagers.add(siteManager);
     }
 
     @EventListener(ContextRefreshedEvent.class)
@@ -72,9 +79,18 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public boolean startParsing() {
-        startParsing(siteManagers);
-        return true;
+    public Response startParsing() {
+        try {
+            if (isFullIndexing()) {
+                return new Response(Boolean.FALSE, "Индексация уже запущена", HttpStatus.BAD_REQUEST);
+            } else {
+                startParsing(siteManagers);
+                return new Response(Boolean.TRUE, null, HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -83,26 +99,37 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public boolean stopIndexing() {
-        if (!isFullNotIndexing()) {
-            siteManagers.forEach(s -> {
-                if (!s.isStop()) {
-                    s.stopParsing();
-                }
-            });
-        } else {
-            return false;
+    public Response stopIndexing() {
+        try {
+            if (!isFullNotIndexing()) {
+                siteManagers.forEach(s -> {
+                    if (!s.isStop()) {
+                        s.stopParsing();
+                    }
+                });
+                return new Response(Boolean.TRUE, null, HttpStatus.OK);
+            } else {
+                return new Response(Boolean.FALSE, "Индексация не запущена", HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return true;
     }
 
     @Override
-    public void deleteSite(String url) throws ResponseException {
-        SiteManager siteManager = getSiteManager(url);
-        if (siteManager != null) {
-            siteManager.deleteSite();
-        } else {
-            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
+    public Response deleteSite(String url) {
+        try {
+            SiteManager siteManager = getSiteManager(url);
+            if (siteManager != null) {
+                siteManager.deleteSite();
+                return new Response(Boolean.TRUE, null, HttpStatus.OK);
+            } else {
+                return new Response(Boolean.FALSE, "Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -112,30 +139,42 @@ public class SiteParserServiceImpl implements SiteParserService {
     }
 
     @Override
-    public void startParsing(String url) throws ResponseException {
-        SiteManager siteManager = getSiteManager(url);
-        if (siteManager != null) {
-            if (!siteManager.isStop()) {
-                throw new ResponseException("Индексация сайта уже запущена", HttpStatus.BAD_REQUEST);
+    public Response startSiteParsing(String url) {
+        try {
+            SiteManager siteManager = getSiteManager(url);
+            if (siteManager != null) {
+                if (!siteManager.isStop()) {
+                    return new Response(Boolean.FALSE, "Индексация сайта уже запущена", HttpStatus.BAD_REQUEST);
+                } else {
+                    startParsing(Collections.singletonList(siteManager));
+                    return new Response(Boolean.TRUE, null, HttpStatus.OK);
+                }
             } else {
-                startParsing(Collections.singletonList(siteManager));
+                return new Response(Boolean.FALSE, "Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
             }
-        } else {
-            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public void stopParsing(String url) throws ResponseException {
-        SiteManager siteManager = getSiteManager(url);
-        if (siteManager != null) {
-            if (siteManager.isStop()) {
-                throw new ResponseException("Индексация сайта уже остановлена", HttpStatus.BAD_REQUEST);
+    public Response stopSiteParsing(String url) {
+        try {
+            SiteManager siteManager = getSiteManager(url);
+            if (siteManager != null) {
+                if (siteManager.isStop()) {
+                    return new Response(Boolean.FALSE, "Индексация сайта уже остановлена", HttpStatus.BAD_REQUEST);
+                } else {
+                    siteManager.stopParsing();
+                    return new Response(Boolean.TRUE, null, HttpStatus.OK);
+                }
             } else {
-                siteManager.stopParsing();
+                return new Response(Boolean.FALSE, "Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
             }
-        } else {
-            throw new ResponseException("Данный сайт отсутствует в системе", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new Response(Boolean.FALSE, "Непредвиденная ошибка сервера", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

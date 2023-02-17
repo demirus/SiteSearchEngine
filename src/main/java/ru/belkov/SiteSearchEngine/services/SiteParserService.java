@@ -1,9 +1,10 @@
 package ru.belkov.SiteSearchEngine.services;
 
+import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
 
 public interface SiteParserService {
-    void parseSite(String name, String url);
+    Response parseSite(String name, String url);
 
     void loadSiteManagers();
 
@@ -11,13 +12,13 @@ public interface SiteParserService {
 
     boolean isFullNotIndexing();
 
-    boolean startParsing();
+    Response startParsing();
 
-    boolean stopIndexing();
+    Response stopIndexing();
 
-    void deleteSite(String url) throws ResponseException;
+    Response deleteSite(String url);
 
-    void startParsing(String url) throws ResponseException;
+    Response startSiteParsing(String url);
 
-    void stopParsing(String url) throws ResponseException;
+    Response stopSiteParsing(String url);
 }

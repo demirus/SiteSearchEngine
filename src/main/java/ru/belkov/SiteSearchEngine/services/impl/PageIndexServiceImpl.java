@@ -114,12 +114,26 @@ public class PageIndexServiceImpl implements PageIndexService {
     }
 
     private String convertPathToRelative(String siteName, String absolutePath) {
-        if (!absolutePath.startsWith(siteName)) {
-            return null;
-        } else if (absolutePath.equals(siteName)) {
-            return "/";
+        String siteUrlWithHttp;
+        String siteUrlWithHttps;
+        if (siteName.startsWith("http")) {
+            siteUrlWithHttp = siteName;
+            siteUrlWithHttps = siteName.replaceFirst("http", "https");
+        } else if (siteName.startsWith("https")) {
+            siteUrlWithHttp = siteName.replaceFirst("https", "http");
+            siteUrlWithHttps = siteName;
         } else {
-            return absolutePath.substring(siteName.length());
+            return null;
+        }
+
+        if (absolutePath.equals(siteUrlWithHttp) || absolutePath.equals(siteUrlWithHttps)) {
+            return "/";
+        } else if (absolutePath.startsWith(siteUrlWithHttp)) {
+            return absolutePath.substring(siteUrlWithHttp.length());
+        } else if (absolutePath.startsWith(siteUrlWithHttps)) {
+            return absolutePath.substring(siteUrlWithHttps.length());
+        } else {
+            return null;
         }
     }
 

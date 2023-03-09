@@ -61,6 +61,9 @@ public class StatisticsServiceImpl implements StatisticsService {
         List<Site> sites = siteService.getAll();
         for (Site site : sites) {
             String error = site.getLastError();
+            if (error == null) {
+                error = "";
+            }
             SiteInformation siteInformation = new SiteInformation();
             siteInformation.setStatus(site.getStatus() != null ? site.getStatus().toString() : "");
             siteInformation.setStatusTime(site.getStatusTime() != null ? site.getStatusTime().toString() : "");

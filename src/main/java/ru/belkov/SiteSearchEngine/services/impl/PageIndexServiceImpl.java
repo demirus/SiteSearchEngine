@@ -1,14 +1,12 @@
 package ru.belkov.SiteSearchEngine.services.impl;
 
 import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.model.entity.*;
 import ru.belkov.SiteSearchEngine.services.*;
@@ -22,8 +20,6 @@ import java.util.*;
 
 @Service
 public class PageIndexServiceImpl implements PageIndexService {
-    private final SiteParserConfig siteParserConfig;
-
     private final PageService pageService;
 
     private final IndexService indexService;
@@ -34,15 +30,17 @@ public class PageIndexServiceImpl implements PageIndexService {
 
     private final FieldService fieldService;
 
+    private final ConnectionService connectionService;
+
     private static final Logger logger = LoggerFactory.getLogger(PageIndexServiceImpl.class);
 
-    public PageIndexServiceImpl(SiteParserConfig siteParserConfig, PageService pageService, IndexService indexService, LemmaService lemmaService, SiteService siteService, FieldService fieldService) {
-        this.siteParserConfig = siteParserConfig;
+    public PageIndexServiceImpl(PageService pageService, IndexService indexService, LemmaService lemmaService, SiteService siteService, FieldService fieldService, ConnectionService connectionService) {
         this.pageService = pageService;
         this.indexService = indexService;
         this.lemmaService = lemmaService;
         this.siteService = siteService;
         this.fieldService = fieldService;
+        this.connectionService = connectionService;
     }
 
     @Override
@@ -53,25 +51,29 @@ public class PageIndexServiceImpl implements PageIndexService {
                 return new Response(Boolean.FALSE, "Страница находится за пределами индексируемых сайтов", HttpStatus.NOT_FOUND);
             }
             String relativePath = convertPathToRelative(site.getUrl(), url);
-            Page page = pageService.getByUrl(relativePath);
-            if (page == null) {
-                page = new Page();
-                page.setPath(relativePath);
-                page.setContent("");
-                page.setCode(0);
-                page.setSite(site);
-                if (pageService.addIfNotExists(page)) {
-                    site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-                    siteService.updateSiteByUrl(site);
+            if (relativePath != null) {
+                Page page = pageService.getByUrl(relativePath);
+                if (page == null) {
+                    page = new Page();
+                    page.setPath(relativePath);
+                    page.setContent("");
+                    page.setCode(0);
+                    page.setSite(site);
+                    if (pageService.addIfNotExists(page)) {
+                        site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+                        siteService.updateSiteByUrl(site);
+                        if (addPageToIndex(page) != null) {
+                            return new Response(Boolean.TRUE, null, HttpStatus.OK);
+                        }
+                    }
+                } else {
+                    clearPageData(page);
                     if (addPageToIndex(page) != null) {
                         return new Response(Boolean.TRUE, null, HttpStatus.OK);
                     }
                 }
             } else {
-                clearPageData(page);
-                if (addPageToIndex(page) != null) {
-                    return new Response(Boolean.TRUE, null, HttpStatus.OK);
-                }
+                logger.error("Ошибка при формировании относительного пути (site url: " + site.getUrl() + "page url: " + url + ")");
             }
         } catch (Exception e) {
             logger.error(e.toString(), e);
@@ -83,21 +85,26 @@ public class PageIndexServiceImpl implements PageIndexService {
     @Override
     public Document indexPage(String url, Site site) throws IOException {
         Page page = new Page();
-        page.setPath(convertPathToRelative(site.getUrl(), url));
-        page.setContent("");
-        page.setCode(0);
-        page.setSite(site);
-        if (pageService.addIfNotExists(page)) {
-            site.setStatusTime(new Timestamp(System.currentTimeMillis()));
-            siteService.updateSiteByUrl(site);
-            return addPageToIndex(page);
+        String relativePath = convertPathToRelative(site.getUrl(), url);
+        if (relativePath != null) {
+            page.setPath(relativePath);
+            page.setContent("");
+            page.setCode(0);
+            page.setSite(site);
+            if (pageService.addIfNotExists(page)) {
+                site.setStatusTime(new Timestamp(System.currentTimeMillis()));
+                siteService.updateSiteByUrl(site);
+                return addPageToIndex(page);
+            }
+        } else {
+            logger.error("Ошибка при формировании относительного пути (site url: " + site.getUrl() + "page url: " + url + ")");
         }
         return null;
     }
 
     private Document addPageToIndex(Page page) throws IOException {
         String url = page.getSite().getUrl() + page.getPath();
-        Connection.Response response = createResponse(url);
+        Connection.Response response = connectionService.getResponse(page.getSite(), url);
         String contentType = response.contentType();
         if (contentType != null && contentType.contains("text/") && (response.statusCode() != 404 || response.statusCode() != 500)) {
             Document doc = response.parse();
@@ -135,15 +142,6 @@ public class PageIndexServiceImpl implements PageIndexService {
         } else {
             return null;
         }
-    }
-
-    private Connection.Response createResponse(String url) throws IOException {
-        return Jsoup.connect(url)
-                .ignoreContentType(true)
-                .ignoreHttpErrors(true)
-                .userAgent(siteParserConfig.getUserAgent())
-                .referrer(siteParserConfig.getReferrer())
-                .execute();
     }
 
     private void createLemmasAndIndices(Document doc, Page page) throws IOException {

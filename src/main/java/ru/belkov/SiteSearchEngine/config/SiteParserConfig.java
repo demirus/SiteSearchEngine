@@ -23,6 +23,8 @@ public class SiteParserConfig {
 
     private String referrer;
 
+    private Long intervalBetweenRequests;
+
     private final SiteService siteService;
 
     private static final Logger logger = LoggerFactory.getLogger(SiteParserConfig.class);
@@ -72,5 +74,13 @@ public class SiteParserConfig {
 
     public void setReferrer(String referrer) {
         this.referrer = referrer;
+    }
+
+    public Long getIntervalBetweenRequests() {
+        return intervalBetweenRequests;
+    }
+
+    public void setIntervalBetweenRequests(Long intervalBetweenRequests) {
+        this.intervalBetweenRequests = intervalBetweenRequests;
     }
 }

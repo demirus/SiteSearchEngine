@@ -1,7 +1,6 @@
 package ru.belkov.SiteSearchEngine.services;
 
 import ru.belkov.SiteSearchEngine.dto.Response;
-import ru.belkov.SiteSearchEngine.exceptions.ResponseException;
 
 public interface SiteParserService {
     Response parseSite(String name, String url);

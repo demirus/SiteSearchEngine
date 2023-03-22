@@ -97,7 +97,7 @@ public class PageIndexServiceImpl implements PageIndexService {
                 return addPageToIndex(page);
             }
         } else {
-            logger.error("Ошибка при формировании относительного пути (site url: " + site.getUrl() + "page url: " + url + ")");
+            logger.error("Ошибка при формировании относительного пути (site url: " + site.getUrl() + ", page url: " + url + ")");
         }
         return null;
     }
@@ -105,17 +105,19 @@ public class PageIndexServiceImpl implements PageIndexService {
     private Document addPageToIndex(Page page) throws IOException {
         String url = page.getSite().getUrl() + page.getPath();
         Connection.Response response = connectionService.getResponse(page.getSite(), url);
-        String contentType = response.contentType();
-        if (contentType != null && contentType.contains("text/") && (response.statusCode() != 404 || response.statusCode() != 500)) {
-            Document doc = response.parse();
-            page.setContent(doc.html());
-            page.setCode(response.statusCode());
-            page = pageService.updateByPathAndSite(page);
-            createLemmasAndIndices(doc, page);
-            return doc;
-        } else {
-            page.setCode(response.statusCode());
-            pageService.updateByPathAndSite(page);
+        if (response != null) {
+            String contentType = response.contentType();
+            if (contentType != null && contentType.contains("text/") && (response.statusCode() != 404 || response.statusCode() != 500)) {
+                Document doc = response.parse();
+                page.setContent(doc.html());
+                page.setCode(response.statusCode());
+                page = pageService.updateByPathAndSite(page);
+                createLemmasAndIndices(doc, page);
+                return doc;
+            } else {
+                page.setCode(response.statusCode());
+                pageService.updateByPathAndSite(page);
+            }
         }
         return null;
     }

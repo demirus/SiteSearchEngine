@@ -30,7 +30,7 @@ public class SiteConnectionManagerImpl implements SiteConnectionManager {
                 return response;
             }
         } catch (IOException e) {
-            logger.error("IOException url: " + url + " " + e.getMessage(), e);
+            logger.error("IOException url: " + url + " (count of attempts = " + countOfAttempts + ") " + e.getMessage(), e);
             if (countOfAttempts > 0) {
                 try {
                     Thread.sleep(getDelayBetweenAttempts());

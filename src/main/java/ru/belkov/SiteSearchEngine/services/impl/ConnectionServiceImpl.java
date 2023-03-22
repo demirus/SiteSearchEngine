@@ -28,7 +28,6 @@ public class ConnectionServiceImpl implements ConnectionService {
         SiteConnectionManager manager = siteConnectionManagerMap.get(site);
         if (manager != null) {
             return manager.getResponse(url, siteParserConfig);
-
         } else {
             SiteConnectionManager siteConnectionManager = new SiteConnectionManagerImpl();
             siteConnectionManagerMap.put(site, siteConnectionManager);

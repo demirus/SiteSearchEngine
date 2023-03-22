@@ -15,7 +15,7 @@ public class Page {
     private Integer id;
 
     @Basic
-    @Column(name = "path", nullable = false)
+    @Column(columnDefinition="TEXT", name = "path", nullable = false)
     private String path;
 
     @Basic

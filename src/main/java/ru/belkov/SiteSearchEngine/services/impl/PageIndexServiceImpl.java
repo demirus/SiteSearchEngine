@@ -103,7 +103,12 @@ public class PageIndexServiceImpl implements PageIndexService {
     }
 
     private Document addPageToIndex(Page page) throws IOException {
-        String url = page.getSite().getUrl() + page.getPath();
+        String url;
+        if (!page.getPath().equals("/")) {
+            url = page.getSite().getUrl() + page.getPath();
+        } else {
+            url = page.getSite().getUrl();
+        }
         Connection.Response response = connectionService.getResponse(page.getSite(), url);
         if (response != null) {
             String contentType = response.contentType();
@@ -125,12 +130,12 @@ public class PageIndexServiceImpl implements PageIndexService {
     private String convertPathToRelative(String siteName, String absolutePath) {
         String siteUrlWithHttp;
         String siteUrlWithHttps;
-        if (siteName.startsWith("http")) {
-            siteUrlWithHttp = siteName;
-            siteUrlWithHttps = siteName.replaceFirst("http", "https");
-        } else if (siteName.startsWith("https")) {
+        if (siteName.startsWith("https")) {
             siteUrlWithHttp = siteName.replaceFirst("https", "http");
             siteUrlWithHttps = siteName;
+        } else if (siteName.startsWith("http")) {
+            siteUrlWithHttp = siteName;
+            siteUrlWithHttps = siteName.replaceFirst("http", "https");
         } else {
             return null;
         }

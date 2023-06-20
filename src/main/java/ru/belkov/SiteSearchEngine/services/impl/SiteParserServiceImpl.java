@@ -7,6 +7,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ru.belkov.SiteSearchEngine.config.SiteParserConfig;
 import ru.belkov.SiteSearchEngine.dto.Response;
 import ru.belkov.SiteSearchEngine.model.SiteManager;
 import ru.belkov.SiteSearchEngine.model.SiteManagerImpl;
@@ -28,10 +29,13 @@ public class SiteParserServiceImpl implements SiteParserService {
     private List<SiteManager> siteManagers = new ArrayList<>();
     private final Logger logger = LoggerFactory.getLogger(SiteParserServiceImpl.class);
 
+    private final SiteParserConfig siteParserConfig;
+
     @Autowired
-    public SiteParserServiceImpl(SiteService siteService, PageIndexService pageIndexService) {
+    public SiteParserServiceImpl(SiteService siteService, PageIndexService pageIndexService, SiteParserConfig siteParserConfig) {
         this.siteService = siteService;
         this.pageIndexService = pageIndexService;
+        this.siteParserConfig = siteParserConfig;
     }
 
     @Override
@@ -57,9 +61,11 @@ public class SiteParserServiceImpl implements SiteParserService {
 
     @EventListener(ContextRefreshedEvent.class)
     public void initSiteManagers(ContextRefreshedEvent event) {
-        SiteParserService siteParserService = event.getApplicationContext().getBean(SiteParserService.class);
-        siteParserService.loadSiteManagers();
-        siteParserService.startParsing();
+        if (siteParserConfig.isAutoStart()) {
+            SiteParserService siteParserService = event.getApplicationContext().getBean(SiteParserService.class);
+            siteParserService.loadSiteManagers();
+            siteParserService.startParsing();
+        }
     }
 
     @Override

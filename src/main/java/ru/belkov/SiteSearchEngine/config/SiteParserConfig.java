@@ -25,6 +25,8 @@ public class SiteParserConfig {
 
     private Long intervalBetweenRequests;
 
+    private boolean autoStart;
+
     private final SiteService siteService;
 
     private static final Logger logger = LoggerFactory.getLogger(SiteParserConfig.class);
@@ -82,5 +84,12 @@ public class SiteParserConfig {
 
     public void setIntervalBetweenRequests(Long intervalBetweenRequests) {
         this.intervalBetweenRequests = intervalBetweenRequests;
+    }
+    public boolean isAutoStart() {
+        return autoStart;
+    }
+
+    public void setAutoStart(boolean autoStart) {
+        this.autoStart = autoStart;
     }
 }

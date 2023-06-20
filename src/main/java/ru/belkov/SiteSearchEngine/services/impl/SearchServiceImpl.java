@@ -124,12 +124,14 @@ public class SearchServiceImpl implements SearchService {
         searchResponse.setData(searchDataObjects);
         for (Map.Entry<Site, List<Lemma>> entry : siteLemmasMap.entrySet()) {
             List<Lemma> lemmas = entry.getValue();
-            Lemma rarestLemma = lemmas.get(0);
-            Collection<Index> indexes = rarestLemma.getIndexes();
-            Set<Page> pages = getPagesWithLemmas(indexes, lemmas);
-            List<SearchDataObject> objects = createSearchDataObjects(pages, lemmas, query);
-            searchResponse.setCount(searchResponse.getCount() + objects.size());
-            searchResponse.getData().addAll(objects);
+            if (lemmas.size() != 0) {
+                Lemma rarestLemma = lemmas.get(0);
+                Collection<Index> indexes = rarestLemma.getIndexes();
+                Set<Page> pages = getPagesWithLemmas(indexes, lemmas);
+                List<SearchDataObject> objects = createSearchDataObjects(pages, lemmas, query);
+                searchResponse.setCount(searchResponse.getCount() + objects.size());
+                searchResponse.getData().addAll(objects);
+            }
         }
         return searchResponse;
     }

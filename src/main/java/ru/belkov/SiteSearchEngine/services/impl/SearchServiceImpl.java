@@ -139,7 +139,12 @@ public class SearchServiceImpl implements SearchService {
     private void deleteAllLemmasWithTooHighFrequency(Map<Site, List<Lemma>> siteLemmasMap) {
         long configMaxFrequency = searchConfig.getMaxLemmaFrequency();
         for (Map.Entry<Site, List<Lemma>> entry : siteLemmasMap.entrySet()) {
-            entry.getValue().removeIf(l -> l.getFrequency() >= configMaxFrequency);
+            if (configMaxFrequency == 0) {
+                int sitePagesCount = entry.getKey().getPages().size();
+                entry.getValue().removeIf(l -> l.getFrequency() >= sitePagesCount - 50);
+            } else {
+                entry.getValue().removeIf(l -> l.getFrequency() >= configMaxFrequency);
+            }
         }
     }
 

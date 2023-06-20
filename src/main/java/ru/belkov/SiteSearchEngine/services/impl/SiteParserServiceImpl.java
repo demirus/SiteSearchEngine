@@ -81,7 +81,11 @@ public class SiteParserServiceImpl implements SiteParserService {
 
     @Override
     public boolean isFullIndexing() {
-        return siteManagers.stream().noneMatch(SiteManager::isStop);
+        if (siteManagers.isEmpty()) {
+            return false;
+        } else {
+            return siteManagers.stream().noneMatch(SiteManager::isStop);
+        }
     }
 
     @Override
@@ -90,6 +94,9 @@ public class SiteParserServiceImpl implements SiteParserService {
             if (isFullIndexing()) {
                 return new Response(Boolean.FALSE, "Индексация уже запущена", HttpStatus.BAD_REQUEST);
             } else {
+                if (siteManagers.isEmpty()) {
+                    loadSiteManagers();
+                }
                 startParsing(siteManagers);
                 return new Response(Boolean.TRUE, null, HttpStatus.OK);
             }

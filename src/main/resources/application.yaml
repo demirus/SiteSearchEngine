@@ -25,6 +25,6 @@ parser:
       name: ******
       url: ******
 search:
-  maxLemmaFrequency: 100
+  maxLemmaFrequency: 0
 web-interface :
   path: admin

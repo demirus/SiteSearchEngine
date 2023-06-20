@@ -51,22 +51,6 @@
         </rollingPolicy>
     </appender>
 
-    <appender name="SQLLog"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${SQL_LOG_PATH}/sql.log</file>
-        <encoder
-                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
-        </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${SQL_LOG_PATH}/archived/sql-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>250MB</maxFileSize>
-            <maxHistory>10</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
-
     <root level="info">
         <appender-ref ref="Console" />
         <appender-ref ref="MainLog"/>
@@ -78,9 +62,4 @@
 
     <logger name="ru.belkov.SiteSearchEngine" level="info">
     </logger>
-
-    <logger name="net.ttddyy.dsproxy.listener" level="debug" additivity="false">
-        <appender-ref ref="SQLLog" />
-    </logger>
-
 </configuration>

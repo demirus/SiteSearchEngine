@@ -61,7 +61,7 @@ public class SearchServiceImpl implements SearchService {
             if (!lemmas.isEmpty()) {
                 siteLemmasMap.put(site, lemmas);
             } else {
-                return new Response(Boolean.FALSE, "Указанная страница не найдена", HttpStatus.NOT_FOUND);
+                return new Response(Boolean.FALSE, "Страницы по данному поисковому запросу не найдены", HttpStatus.NOT_FOUND);
             }
             SearchResponse searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
             limitResponse(searchResponse, offset, limit);
@@ -87,7 +87,7 @@ public class SearchServiceImpl implements SearchService {
                 }
             }
             if (siteLemmasMap.isEmpty()) {
-                return new Response(Boolean.FALSE, "Указанная страница не найдена", HttpStatus.NOT_FOUND);
+                return new Response(Boolean.FALSE, "Страницы по данному поисковому запросу не найдены", HttpStatus.NOT_FOUND);
             }
             SearchResponse searchResponse = getSearchResponse(siteLemmasMap, searchRequest);
             limitResponse(searchResponse, offset, limit);

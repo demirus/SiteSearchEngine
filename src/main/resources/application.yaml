@@ -2,9 +2,7 @@ server:
   port: 8080
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/search_engine
-    username: postgres
-    password: ******
+    url: jdbc:postgresql://localhost:5432/search_engine    
   jpa:
     properties:
       dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -16,14 +14,7 @@ parser:
   userAgent: Chrome/4.0.249.0 Safari/532.5
   referrer: https://www.google.com
   intervalBetweenRequests: 3000
-  autoStart : false
-  configSites:
-    -
-      name: ******
-      url: ******
-    -
-      name: ******
-      url: ******
+  autoStart : false  
 search:
   maxLemmaFrequency: 0
 web-interface :

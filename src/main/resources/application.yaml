@@ -12,7 +12,7 @@ spring:
 
 parser:
   userAgent: Chrome/4.0.249.0 Safari/532.5
-  referrer: https://www.google.com
+  referrer: SiteSearchEngine
   intervalBetweenRequests: 3000
   autoStart : false  
 search:
